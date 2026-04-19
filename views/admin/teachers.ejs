@@ -1,0 +1,117 @@
+<%- include('../partials/admin-layout-head') %>
+<% activePage = 'teachers'; %>
+<div class="app-shell">
+<%- include('../partials/admin-sidebar') %>
+<main class="main-content">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu"><i class="fas fa-bars"></i></button>
+      <div>
+        <div class="page-title">शिक्षक <span style="font-family:'DM Sans',sans-serif;font-size:14px;color:#94a3b8;font-weight:400;">Teachers</span></div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <a href="/admin/teachers/add" class="topbar-btn btn-gold"><i class="fas fa-plus"></i> शिक्षक जोडा <small style="opacity:.8;">Add</small></a>
+    </div>
+  </div>
+  <div class="page-content">
+    <% if(success) { %><div class="alert-box alert-success"><i class="fas fa-check-circle"></i> <%= success %></div><% } %>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="fas fa-chalkboard-teacher"></i> सर्व शिक्षक / All Teachers (<%= teachers.length %>)</div>
+      </div>
+      <div class="table-container">
+        <% if(teachers.length === 0) { %>
+          <div class="table-empty"><i class="fas fa-user-slash" style="font-size:40px;display:block;margin-bottom:12px;color:#94a3b8;"></i>अद्याप कोणताही शिक्षक जोडलेला नाही<br><small>No teachers added yet</small></div>
+        <% } else { %>
+        <table>
+          <thead><tr>
+            <th>ID</th><th>नाव / Name</th><th>ईमेल / Email</th><th>वर्ग / Class</th><th>विषय / Subject</th><th>स्थिती / Status</th><th>क्रिया / Actions</th>
+          </tr></thead>
+          <tbody>
+            <% teachers.forEach(t => { %>
+            <tr>
+              <td><span class="badge badge-navy"><%= t.employeeId %></span></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#0f1f3d,#1d3461);display:flex;align-items:center;justify-content:center;color:#c9a84c;font-size:14px;font-weight:700;flex-shrink:0;overflow:hidden;">
+                    <% if(t.profilePhoto) { %><img src="<%= t.profilePhoto %>" style="width:100%;height:100%;object-fit:cover;"/><% } else { %><%= t.name.charAt(0) %><% } %>
+                  </div>
+                  <div>
+                    <div style="font-weight:600;color:#1e293b;"><%= t.name %></div>
+                    <div style="font-size:11px;color:#94a3b8;"><%= t.qualification || '' %></div>
+                  </div>
+                </div>
+              </td>
+              <td style="font-size:13px;"><%= t.email %></td>
+              <td>
+                <% if(t.classAssigned) { %>
+                  <span class="badge badge-gold">वर्ग <%= t.classAssigned %><% if(t.section){ %> - <%= t.section %><% } %></span>
+                <% } else { %><span style="color:#94a3b8;">—</span><% } %>
+              </td>
+              <td><%= t.subject || '—' %></td>
+              <td><span class="badge <%= t.isActive ? 'badge-success' : 'badge-danger' %>"><%= t.isActive ? 'सक्रिय' : 'निष्क्रिय' %></span></td>
+              <td>
+                <div style="display:flex;gap:6px;">
+                  <a href="/admin/teachers/edit/<%= t._id %>" class="topbar-btn btn-outline" style="padding:5px 10px;font-size:12px;" title="संपादन / Edit"><i class="fas fa-edit"></i></a>
+                  <button onclick="resetPassword('<%= t._id %>','<%= t.name %>')" class="topbar-btn btn-outline" style="padding:5px 10px;font-size:12px;" title="पासवर्ड रीसेट / Reset Password"><i class="fas fa-key"></i></button>
+                  <button onclick="deleteTeacher('<%= t._id %>','<%= t.name %>')" class="topbar-btn btn-danger" style="padding:5px 10px;font-size:12px;" title="हटवा / Delete"><i class="fas fa-trash"></i></button>
+                </div>
+              </td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal">
+    <div class="modal-title">⚠️ शिक्षक हटवा / Delete Teacher</div>
+    <p id="deleteMessage">तुम्हाला खरोखर हा शिक्षक हटवायचा आहे का?</p>
+    <div class="modal-actions">
+      <button onclick="closeModal('deleteModal')" class="topbar-btn btn-outline">रद्द करा / Cancel</button>
+      <button id="confirmDeleteBtn" class="topbar-btn btn-danger">हटवा / Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebarOverlay').classList.toggle('show'); }
+function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('show'); }
+
+function showToast(message, type='success'){
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<i class="fas fa-${type==='success'?'check-circle':'exclamation-circle'}" style="color:${type==='success'?'#16a34a':'#dc2626'}"></i>${message}`;
+  c.appendChild(t);
+  setTimeout(()=>t.remove(), 3500);
+}
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+
+function resetPassword(id, name){
+  if(!confirm(`${name} यांचा पासवर्ड रीसेट करायचा का? नवीन पासवर्ड त्यांच्या ईमेलवर पाठवला जाईल.`)) return;
+  fetch(`/admin/teachers/reset-password/${id}`, {method:'POST', headers:{'Content-Type':'application/json'}})
+    .then(r=>r.json()).then(d=>showToast(d.message, d.success?'success':'error'));
+}
+
+function deleteTeacher(id, name){
+  document.getElementById('deleteMessage').textContent = `"${name}" या शिक्षकाला हटवायचे का? हे पूर्वत होणार नाही.`;
+  document.getElementById('deleteModal').classList.add('show');
+  document.getElementById('confirmDeleteBtn').onclick = ()=>{
+    fetch(`/admin/teachers/delete/${id}`, {method:'POST'})
+      .then(r=>r.json()).then(d=>{
+        if(d.success) location.reload();
+        else showToast(d.message, 'error');
+      });
+  };
+}
+</script>
+</body></html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title><%= title %> — School ERP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="erp-wrapper">
+  <!-- Sidebar Overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="logo-icon"><i class="fas fa-graduation-cap"></i></div>
+        <div class="logo-text">
+          <div class="logo-name"><%= schoolName %></div>
+          <div class="logo-sub">Admin Panel</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-user">
+      <div class="sidebar-avatar">
+        <% if (user && user.photo) { %>
+          <img src="<%= user.photo %>" alt="<%= user.name %>">
+        <% } else { %>
+          <i class="fas fa-user-shield"></i>
+        <% } %>
+      </div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name"><%= user ? user.name : 'Admin' %></div>
+        <div class="sidebar-user-role">Principal</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Main</div>
+      <a href="/admin/dashboard" class="nav-item <%= typeof activePage !== 'undefined' && activePage === 'dashboard' ? 'active' : '' %>">
+        <i class="fas fa-th-large"></i> Dashboard
+      </a>
+      <a href="/admin/teachers" class="nav-item <%= typeof activePage !== 'undefined' && activePage === 'teachers' ? 'active' : '' %>">
+        <i class="fas fa-chalkboard-teacher"></i> Teachers
+      </a>
+
+      <div class="nav-section-title">Students</div>
+      <a href="/admin/students" class="nav-item <%= typeof activePage !== 'undefined' && activePage === 'students' ? 'active' : '' %>">
+        <i class="fas fa-user-graduate"></i> All Students
+      </a>
+      <a href="/admin/students?status=active" class="nav-item">
+        <i class="fas fa-users"></i> Active Students
+      </a>
+
+      <div class="nav-section-title">Reports</div>
+      <a href="/admin/activity" class="nav-item <%= typeof activePage !== 'undefined' && activePage === 'activity' ? 'active' : '' %>">
+        <i class="fas fa-history"></i> Activity Logs
+      </a>
+
+      <div class="nav-section-title">Account</div>
+      <a href="/admin/profile" class="nav-item <%= typeof activePage !== 'undefined' && activePage === 'profile' ? 'active' : '' %>">
+        <i class="fas fa-user-cog"></i> My Profile
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="/auth/logout" class="logout-btn">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger" onclick="toggleSidebar()">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div>
+          <div class="page-title"><%= title %></div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <a href="/admin/activity" class="topbar-btn" title="Activity Logs">
+          <i class="fas fa-bell"></i>
+        </a>
+        <a href="/admin/profile" class="topbar-user">
+          <div class="topbar-avatar">
+            <% if (user && user.photo) { %>
+              <img src="<%= user.photo %>" alt="">
+            <% } else { %>
+              <i class="fas fa-user-shield"></i>
+            <% } %>
+          </div>
+          <span><%= user ? user.name : 'Admin' %></span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <div class="page-content">

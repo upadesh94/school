@@ -1,0 +1,83 @@
+<%- include('../partials/admin-layout-head') %>
+<% activePage = 'students'; %>
+<div class="app-shell">
+<%- include('../partials/admin-sidebar') %>
+<main class="main-content">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu"><i class="fas fa-bars"></i></button>
+      <div>
+        <div class="page-title">विद्यार्थी <span style="font-family:'DM Sans',sans-serif;font-size:14px;color:#94a3b8;font-weight:400;">Students</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="page-content">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="fas fa-user-graduate"></i> सर्व विद्यार्थी / All Students (<%= students.length %>)</div>
+      </div>
+      <div class="card-body" style="padding-bottom:0;">
+        <div class="search-bar">
+          <form method="GET" action="/admin/students" style="display:flex;gap:12px;width:100%;flex-wrap:wrap;">
+            <div class="search-wrap">
+              <i class="fas fa-search search-icon"></i>
+              <input type="text" name="search" class="input" placeholder="नाव किंवा ID शोधा / Search by name or ID..." value="<%= search %>"/>
+            </div>
+            <select name="classFilter" class="select" style="width:180px;">
+              <option value="">सर्व वर्ग / All Classes</option>
+              <% [['१ली','1st'],['२री','2nd'],['३री','3rd'],['४थी','4th'],['५वी','5th'],['६वी','6th'],['७वी','7th'],['८वी','8th'],['९वी','9th'],['१०वी','10th']].forEach(([mr,en]) => { %>
+              <option value="<%= mr %>" <%= classFilter === mr ? 'selected' : '' %>><%= mr %> (<%= en %>)</option>
+              <% }) %>
+            </select>
+            <button type="submit" class="topbar-btn btn-gold"><i class="fas fa-filter"></i> फिल्टर / Filter</button>
+            <a href="/admin/students" class="topbar-btn btn-outline">साफ करा / Clear</a>
+          </form>
+        </div>
+      </div>
+      <div class="table-container">
+        <% if(students.length === 0) { %>
+          <div class="table-empty"><i class="fas fa-users-slash" style="font-size:40px;display:block;margin-bottom:12px;color:#94a3b8;"></i>कोणताही विद्यार्थी सापडला नाही<br><small>No students found</small></div>
+        <% } else { %>
+        <table>
+          <thead><tr>
+            <th>क्र. / Roll No</th>
+            <th>नाव / Name</th>
+            <th>वर्ग / Class</th>
+            <th>प्रवेश ID / Enrollment</th>
+            <th>वडिलांचे नाव / Father's Name</th>
+            <th>जोडले / Added By</th>
+
+            <th>क्रिया / Action</th>
+          </tr></thead>
+          <tbody>
+            <% students.forEach(s => { %>
+            <tr>
+              <td><span class="badge badge-navy"><%= s.rollNo || '—' %></span></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#0f1f3d,#1d3461);display:flex;align-items:center;justify-content:center;color:#c9a84c;font-size:12px;font-weight:700;flex-shrink:0;overflow:hidden;">
+                    <% if(s.photo) { %><img src="<%= s.photo %>" style="width:100%;height:100%;object-fit:cover;"/><% } else { %><%= s.name.charAt(0) %><% } %>
+                  </div>
+                  <strong style="font-family:'Noto Sans Devanagari',sans-serif;"><%= s.name %></strong>
+                </div>
+              </td>
+              <td><span class="badge badge-gold">वर्ग <%= s.currentClass %><% if(s.currentSection) { %> - <%= s.currentSection %><% } %></span></td>
+              <td><code style="font-size:11px;color:#0f1f3d;"><%= s.enrollmentId %></code></td>
+              <td><%= s.fatherName || '—' %></td>
+              <td><%= s.addedBy ? s.addedBy.name : '—' %></td>
+              <td><a href="/admin/students/<%= s._id %>" class="topbar-btn btn-outline" style="padding:5px 10px;font-size:12px;"><i class="fas fa-eye"></i> पहा</a></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+<script>
+function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebarOverlay').classList.toggle('show'); }
+function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('show'); }
+</script>
+</body></html>

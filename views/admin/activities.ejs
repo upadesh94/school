@@ -1,0 +1,46 @@
+<%- include('../partials/admin-layout-head') %>
+<% activePage = 'activities'; %>
+<div class="app-shell">
+<%- include('../partials/admin-sidebar') %>
+<main class="main-content">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu"><i class="fas fa-bars"></i></button>
+      <div>
+        <div class="page-title">नोंदी <span style="font-family:'DM Sans',sans-serif;font-size:14px;color:#94a3b8;font-weight:400;">Activity Log</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="page-content">
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="fas fa-history"></i> सर्व नोंदी / All Activities</div></div>
+      <div class="card-body">
+        <% if(activities.length === 0) { %>
+          <div style="text-align:center;color:#94a3b8;padding:40px;">अद्याप कोणतीही नोंद नाही<br><small>No activities recorded yet</small></div>
+        <% } else { %>
+          <% activities.forEach(a => { %>
+          <div class="activity-item">
+            <div class="activity-dot <%= a.performedByRole === 'admin' ? 'admin' : 'teacher' %>">
+              <i class="fas fa-<%= a.performedByRole === 'admin' ? 'shield-alt' : 'user-tie' %>"></i>
+            </div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <span class="activity-action"><%= a.action %></span>
+                <span class="badge <%= a.performedByRole === 'admin' ? 'badge-info' : 'badge-success' %>"><%= a.performedByRole === 'admin' ? 'मुख्याध्यापक' : 'शिक्षक' %></span>
+              </div>
+              <div class="activity-detail">कोणाकडून: <strong><%= a.performedBy %></strong><% if(a.target) { %> — <%= a.target %><% } %><% if(a.details) { %> — <%= a.details %><% } %></div>
+              <div class="activity-time"><i class="fas fa-clock" style="margin-right:4px;"></i><%= new Date(a.createdAt).toLocaleString('mr-IN') %></div>
+            </div>
+          </div>
+          <% }) %>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+<script>
+function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebarOverlay').classList.toggle('show'); }
+function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('show'); }
+</script>
+</body></html>

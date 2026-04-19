@@ -1,0 +1,117 @@
+<%- include('../partials/admin-layout-head') %>
+<% activePage = 'dashboard'; %>
+<div class="app-shell">
+<%- include('../partials/admin-sidebar') %>
+<main class="main-content">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu"><i class="fas fa-bars"></i></button>
+      <div>
+        <div class="page-title">डॅशबोर्ड <span style="font-family:'DM Sans',sans-serif;font-size:14px;color:#94a3b8;font-weight:400;">Dashboard</span></div>
+        <div class="breadcrumb">स्वागत आहे, <%= admin.name %>! &nbsp;|&nbsp; Welcome back!</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span style="font-size:12px;color:#94a3b8;"><i class="fas fa-calendar"></i> <%= new Date().toLocaleDateString('mr-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'}) %></span>
+    </div>
+  </div>
+  <div class="page-content">
+    <% if(success) { %><div class="alert-box alert-success"><i class="fas fa-check-circle"></i> <%= success %></div><% } %>
+    
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card gold">
+        <div class="stat-icon gold"><i class="fas fa-chalkboard-teacher"></i></div>
+        <div><div class="stat-value"><%= stats.totalTeachers %></div><div class="stat-label">एकूण शिक्षक <span style="display:block;font-size:10px;opacity:.7;">Total Teachers</span></div></div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+        <div><div class="stat-value"><%= stats.activeTeachers %></div><div class="stat-label">सक्रिय शिक्षक <span style="display:block;font-size:10px;opacity:.7;">Active Teachers</span></div></div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-icon blue"><i class="fas fa-user-graduate"></i></div>
+        <div><div class="stat-value"><%= stats.totalStudents %></div><div class="stat-label">एकूण विद्यार्थी <span style="display:block;font-size:10px;opacity:.7;">Total Students</span></div></div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-icon red"><i class="fas fa-school"></i></div>
+        <div><div class="stat-value"><%= classWiseCount.length %></div><div class="stat-label">सक्रिय वर्ग <span style="display:block;font-size:10px;opacity:.7;">Active Classes</span></div></div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;flex-wrap:wrap;">
+      <!-- Class Wise Students -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="fas fa-layer-group"></i> वर्गनिहाय विद्यार्थी <span style="font-size:12px;color:#94a3b8;">Class-Wise Students</span></div>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <% if(classWiseCount.length === 0) { %>
+            <div class="table-empty"><i class="fas fa-inbox" style="font-size:32px;margin-bottom:10px;display:block;color:#94a3b8;"></i>अद्याप कोणताही विद्यार्थी नाही<br><small>No student data yet</small></div>
+          <% } else { %>
+          <table>
+            <thead><tr><th>वर्ग / Class</th><th>तुकडी / Section</th><th>विद्यार्थी / Students</th></tr></thead>
+            <tbody>
+              <% classWiseCount.forEach(item => { %>
+              <tr>
+                <td><span class="badge badge-navy"><%= item._id.class %></span></td>
+                <td><%= item._id.section || '—' %></td>
+                <td><strong><%= item.count %></strong></td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="fas fa-history"></i> अलीकडील नोंदी <span style="font-size:12px;color:#94a3b8;">Recent Activity</span></div>
+          <a href="/admin/activities" class="topbar-btn btn-outline" style="font-size:12px;padding:6px 12px;">सर्व पहा / View All</a>
+        </div>
+        <div class="card-body">
+          <% if(recentActivities.length === 0) { %>
+            <div style="text-align:center;color:#94a3b8;padding:20px;">अद्याप कोणतीही नोंद नाही<br><small>No recent activity</small></div>
+          <% } else { %>
+            <% recentActivities.forEach(a => { %>
+            <div class="activity-item">
+              <div class="activity-dot <%= a.performedByRole %>">
+                <i class="fas fa-<%= a.performedByRole === 'admin' ? 'shield-alt' : 'user-tie' %>"></i>
+              </div>
+              <div>
+                <div class="activity-action"><%= a.action %></div>
+                <div class="activity-detail">by <%= a.performedBy %> <% if(a.target){ %> — <%= a.target %><% } %></div>
+                <div class="activity-time"><%= new Date(a.createdAt).toLocaleString('mr-IN') %></div>
+              </div>
+            </div>
+            <% }) %>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card" style="margin-top:24px;">
+      <div class="card-header"><div class="card-title"><i class="fas fa-bolt"></i> जलद क्रिया <span style="font-size:12px;color:#94a3b8;">Quick Actions</span></div></div>
+      <div class="card-body" style="display:flex;gap:14px;flex-wrap:wrap;">
+        <a href="/admin/teachers/add" class="topbar-btn btn-gold"><i class="fas fa-plus"></i> शिक्षक जोडा <small style="opacity:.75;">Add Teacher</small></a>
+        <a href="/admin/teachers" class="topbar-btn btn-outline"><i class="fas fa-users"></i> शिक्षक व्यवस्थापन <small style="opacity:.75;">Manage Teachers</small></a>
+        <a href="/admin/students" class="topbar-btn btn-outline"><i class="fas fa-user-graduate"></i> विद्यार्थी पहा <small style="opacity:.75;">View Students</small></a>
+        <a href="/admin/activities" class="topbar-btn btn-outline"><i class="fas fa-history"></i> नोंदी <small style="opacity:.75;">Activity Log</small></a>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+<script>
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('show');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('show');
+}
+</script>
+</body></html>

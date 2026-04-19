@@ -1,0 +1,85 @@
+<%- include('../partials/teacher-layout-head') %>
+<% activePage = 'profile'; %>
+<div class="app-shell">
+<%- include('../partials/teacher-sidebar') %>
+<main class="main-content">
+  <div class="topbar">
+    <div class="topbar-left"><div class="page-title">My Profile</div></div>
+  </div>
+  <div class="page-content">
+    <% if(error) { %><div class="alert-box alert-error"><i class="fas fa-exclamation-circle"></i> <%= error %></div><% } %>
+    <% if(success) { %><div class="alert-box alert-success"><i class="fas fa-check-circle"></i> <%= success %></div><% } %>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="fas fa-user-cog"></i> Profile Information</div></div>
+        <div class="card-body">
+          <div class="profile-header" style="margin-bottom:24px;">
+            <div class="profile-avatar">
+              <% if(teacher.profilePhoto) { %><img src="<%= teacher.profilePhoto %>" alt=""/><% } else { %><i class="fas fa-user-tie"></i><% } %>
+            </div>
+            <div>
+              <div class="profile-name"><%= teacher.name %></div>
+              <div class="profile-role">Class Teacher · <%= teacher.classAssigned ? 'Class '+teacher.classAssigned : 'Not Assigned' %></div>
+              <div style="color:rgba(255,255,255,.5);font-size:12px;margin-top:4px;"><%= teacher.employeeId %></div>
+            </div>
+          </div>
+          <form method="POST" action="/teacher/profile" enctype="multipart/form-data">
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <div class="form-group"><label class="label">Full Name</label><input type="text" name="name" class="input" value="<%= teacher.name %>" required/></div>
+              <div class="form-group"><label class="label">Phone</label><input type="tel" name="phone" class="input" value="<%= teacher.phone || '' %>"/></div>
+              <div class="form-group"><label class="label">Address</label><textarea name="address" class="textarea"><%= teacher.address || '' %></textarea></div>
+              <div class="form-group"><label class="label">Profile Photo</label><input type="file" name="profilePhoto" class="input" accept="image/*" style="padding:8px;"/></div>
+              <button type="submit" class="topbar-btn btn-gold" style="width:fit-content;padding:12px 24px;"><i class="fas fa-save"></i> Update Profile</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="fas fa-lock"></i> Change Password</div></div>
+        <div class="card-body">
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div class="form-group"><label class="label">Current Password</label><input type="password" id="currentPass" class="input" placeholder="Enter current password"/></div>
+            <div class="form-group"><label class="label">New Password</label><input type="password" id="newPass" class="input" placeholder="Minimum 6 characters"/></div>
+            <div class="form-group"><label class="label">Confirm New Password</label><input type="password" id="confirmPass" class="input" placeholder="Repeat new password"/></div>
+            <button onclick="changePassword()" class="topbar-btn btn-gold" style="width:fit-content;padding:12px 24px;"><i class="fas fa-key"></i> Change Password</button>
+          </div>
+          <div class="card" style="margin-top:24px;background:#f8faff;border:1px solid #e2e8f0;">
+            <div class="card-body" style="padding:16px;font-size:13px;">
+              <div style="color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">My Details</div>
+              <% const items = [['Employee ID', teacher.employeeId], ['Email', teacher.email], ['Subject', teacher.subject||'—'], ['Qualification', teacher.qualification||'—'], ['Joining Date', teacher.joiningDate ? new Date(teacher.joiningDate).toLocaleDateString('en-IN') : '—']]; items.forEach(([l,v]) => { %>
+              <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #e2e8f0;"><span style="color:#64748b;"><%= l %></span><strong><%= v %></strong></div>
+              <% }) %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+<script>
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');}
+function showToast(message, type='success'){
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<i class="fas fa-${type==='success'?'check-circle':'exclamation-circle'}" style="color:${type==='success'?'#16a34a':'#dc2626'}"></i>${message}`;
+  c.appendChild(t);
+  setTimeout(()=>t.remove(), 3500);
+}
+function changePassword(){
+  const currentPassword = document.getElementById('currentPass').value;
+  const newPassword = document.getElementById('newPass').value;
+  const confirmPassword = document.getElementById('confirmPass').value;
+  if(!currentPassword||!newPassword||!confirmPassword) return showToast('All fields required','error');
+  fetch('/teacher/change-password', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({currentPassword, newPassword, confirmPassword})
+  }).then(r=>r.json()).then(d=>{
+    showToast(d.message, d.success?'success':'error');
+    if(d.success){document.getElementById('currentPass').value='';document.getElementById('newPass').value='';document.getElementById('confirmPass').value='';}
+  });
+}
+</script>
+</body></html>

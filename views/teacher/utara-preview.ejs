@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>प्रवेश निर्गम रजिस्टर उतारा</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Noto Sans Devanagari',sans-serif; background:#f0f2f5; }
+
+    .toolbar {
+      background:#4a148c; padding:14px 28px; display:flex; align-items:center;
+      justify-content:space-between; position:sticky; top:0; z-index:100;
+      box-shadow:0 2px 8px rgba(0,0,0,0.3);
+    }
+    .toolbar-title { color:#fff; font-size:18px; font-weight:700; }
+    .toolbar-sub { color:#e1bee7; font-size:13px; margin-top:2px; }
+    .toolbar-btns { display:flex; gap:10px; }
+    .btn-t {
+      padding:9px 18px; border:none; border-radius:7px; font-size:13px;
+      font-family:'Noto Sans Devanagari',sans-serif; cursor:pointer; font-weight:600;
+      text-decoration:none; display:inline-flex; align-items:center; gap:5px;
+    }
+    .btn-back { background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.3); cursor:pointer; }
+    .btn-print { background:#ff9800; color:#fff; }
+    .btn-dl { background:#43a047; color:#fff; }
+
+    .page-wrap { display:flex; justify-content:center; padding:28px 20px 60px; }
+
+    .cert {
+      background:#fff; width:860px; padding:24px 36px;
+      box-shadow:0 4px 24px rgba(0,0,0,0.12); border-radius:4px;
+      font-family:'Noto Sans Devanagari',sans-serif; font-size:14px;
+    }
+
+    .school-line { font-size:14px; font-weight:700; margin-bottom:6px; }
+
+    /* Title — no dash */
+    .cert-title { text-align:center; font-size:26px; font-weight:700; margin-bottom:10px; }
+
+    /* UDISE row — full width */
+    .udise-row {
+      display:grid; grid-template-columns:140px 14px 1fr;
+      font-size:14px; font-weight:700; align-items:center; margin-bottom:8px;
+    }
+    .udise-val {
+      border-bottom:2px solid #000; padding-bottom:2px;
+      font-weight:400; padding-left:4px; min-height:20px;
+    }
+
+    /* Saral + Aadhar boxes: side by side, full-width row below UDISE */
+    .boxes-section {
+      display:flex; gap:20px; align-items:flex-start;
+      margin-bottom:10px;
+    }
+    .box-group { }
+    .box-label {
+      font-size:12px; font-weight:700; text-align:center;
+      border:1.5px solid #000; border-bottom:none; padding:2px 6px;
+    }
+    .box-row { display:flex; }
+    .box-cell {
+      width:22px; height:25px; border:1.5px solid #000;
+      display:flex; align-items:center; justify-content:center;
+      font-size:11px; font-weight:600;
+    }
+
+    /* Main fields table */
+    .fields-table { width:100%; border-collapse:collapse; }
+    .fields-table td { font-size:13px; padding:1px 2px; vertical-align:middle; line-height:1.85; }
+    .lbl-col { width:210px; font-weight:700; white-space:nowrap; padding-right:4px; }
+    .colon-col { width:14px; text-align:center; }
+    .val-col { border-bottom:1.5px solid #000; font-weight:400; padding-left:6px; padding-bottom:1px; }
+
+    /* Stamp in field 17 */
+    .stamp-cell { padding:4px 0 6px 0; }
+    .stamp-cell img { height:70px; width:auto; display:block; }
+
+    /* Bottom: date only */
+    .bottom-row { display:flex; align-items:flex-end; margin-top:12px; }
+    .date-field {
+      display:grid; grid-template-columns:65px 14px 180px;
+      font-size:14px; font-weight:700; align-items:center;
+    }
+    .date-val { border-bottom:1.5px solid #000; font-weight:400; padding-left:4px; }
+
+    @page { size:A4 portrait; margin:12mm 10mm; }
+    @media print {
+      html,body { -webkit-print-color-adjust:exact; print-color-adjust:exact; background:#fff!important; margin:0!important; padding:0!important; }
+      .toolbar { display:none!important; }
+      .page-wrap { padding:0!important; background:transparent!important; }
+      .cert { width:100%!important; box-shadow:none!important; border-radius:0!important; padding:0!important; }
+      * { page-break-inside:avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="toolbar">
+  <div>
+    <div class="toolbar-title">📋 प्रवेश निर्गम रजिस्टर उतारा</div>
+    <div class="toolbar-sub"><%= student.name %> | वर्ग <%= student.currentClass %></div>
+  </div>
+  <div class="toolbar-btns">
+    <button onclick="goBack()" class="btn-t btn-back">← परत</button>
+    <button onclick="window.print()" class="btn-t btn-print">🖨️ Print / PDF</button>
+    <a href="/teacher/students/<%= student._id %>/utara/download" class="btn-t btn-dl">⬇ Word (.docx)</a>
+  </div>
+</div>
+
+<div class="page-wrap">
+<div class="cert">
+
+  <%
+    const fmtD = (d) => {
+      if(!d) return '';
+      try { return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric'}); }
+      catch(e){ return ''; }
+    };
+    const today = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric'});
+    const aadharStr = (student.aadharNo||'').replace(/\s/g,'');
+    const saralStr  = student.saralId || '';
+    const aadharArr = (aadharStr+'            ').slice(0,12).split('');
+    const saralArr  = (saralStr +'                   ').slice(0,19).split('');
+  %>
+
+  <div class="school-line">शाळेचे नाव : तुलजाभवानी माध्यमिक विद्यालय, वासुसायगाव, ता. गंगापूर</div>
+
+  <!-- Title WITHOUT dash -->
+  <div class="cert-title">प्रवेश  व  निर्गम  रजिस्टर  उतारा</div>
+
+  <!-- 1. UDISE — full width row -->
+  <div class="udise-row">
+    <span>युडायस नंबर</span>
+    <span>:</span>
+    <span class="udise-val"><%= student.udiseNo || '' %></span>
+  </div>
+
+  <!-- 2. Saral ID + Aadhar boxes — side by side, BELOW UDISE, ABOVE fields table -->
+  <div class="boxes-section">
+    <div class="box-group">
+      <div class="box-label">सरल आय. डि. नं</div>
+      <div class="box-row">
+        <% saralArr.forEach(ch => { %><div class="box-cell"><%= ch.trim() %></div><% }); %>
+      </div>
+    </div>
+    <div class="box-group">
+      <div class="box-label">आधार नं.</div>
+      <div class="box-row">
+        <% aadharArr.forEach(ch => { %><div class="box-cell"><%= ch.trim() %></div><% }); %>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Main fields table — starts with field 1 -->
+  <table class="fields-table">
+    <tbody>
+      <tr><td class="lbl-col">1) प्रवेश क्रमांक</td><td class="colon-col">:</td><td class="val-col"><%= student.enrollmentId||'' %></td></tr>
+      <tr><td class="lbl-col">2) विद्यार्थ्याचे नाव</td><td class="colon-col">:</td><td class="val-col"><%= student.name||'' %></td></tr>
+      <tr><td class="lbl-col">3) आईचे नाव</td><td class="colon-col">:</td><td class="val-col"><%= student.motherName||'' %></td></tr>
+      <tr><td class="lbl-col">4) धर्म व जात</td><td class="colon-col">:</td><td class="val-col"><%= [student.religion,student.caste].filter(Boolean).join(' / ') %></td></tr>
+      <tr><td class="lbl-col">5) मातृभाषा</td><td class="colon-col">:</td><td class="val-col"><%= student.motherTongue||'मराठी' %></td></tr>
+      <tr><td class="lbl-col">6) जन्मस्थळ</td><td class="colon-col">:</td><td class="val-col"><%= student.birthPlace||'' %></td></tr>
+      <tr><td class="lbl-col">7) जन्म दिनांक अंकात</td><td class="colon-col">:</td><td class="val-col"><%= fmtD(student.dateOfBirth) %></td></tr>
+      <tr><td class="lbl-col">8) जन्म दिनांक अक्षरात</td><td class="colon-col">:</td><td class="val-col"><%= student.dateOfBirthInWords||'' %></td></tr>
+      <tr><td class="lbl-col">9) पूर्वीची शाळा</td><td class="colon-col">:</td><td class="val-col"><%= student.previousSchool||'' %></td></tr>
+      <tr><td class="lbl-col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;शाळेचे नाव</td><td class="colon-col">:</td><td class="val-col">तुलजाभवानी माध्यमिक विद्यालय, वासुसायगाव, ता. गंगापूर</td></tr>
+      <tr><td class="lbl-col">10) वर्ग</td><td class="colon-col">:</td><td class="val-col"><%= (student.currentClass||'')+(student.currentSection?' '+student.currentSection:'') %></td></tr>
+      <tr><td class="lbl-col">11) प्रवेश दिनांक</td><td class="colon-col">:</td><td class="val-col"><%= fmtD(student.admissionDate) %></td></tr>
+      <tr><td class="lbl-col">12) प्रवेशाच्या वेळेस वर्ग</td><td class="colon-col">:</td><td class="val-col"><%= student.admissionClass||'' %></td></tr>
+      <tr><td class="lbl-col">13) शाळा सोडताना वर्ग</td><td class="colon-col">:</td><td class="val-col"><%= student.leavingClass||'' %></td></tr>
+      <tr><td class="lbl-col">14) शाळा सोडताना दिनांक</td><td class="colon-col">:</td><td class="val-col"><%= fmtD(student.leavingDate) %></td></tr>
+      <tr><td class="lbl-col">15) शाळा सोडण्याचे कारण</td><td class="colon-col">:</td><td class="val-col"><%= student.reasonForLeaving||'' %></td></tr>
+      <tr><td class="lbl-col">16) शेरा</td><td class="colon-col">:</td><td class="val-col"><%= student.remarks||'' %></td></tr>
+      <!-- Field 17: stamp image -->
+      <tr>
+        <td class="lbl-col">17) मुख्याध्यापकाची स्वाक्षरी</td>
+        <td class="colon-col">:</td>
+        <td class="val-col">
+          <div class="stamp-cell">
+            <img src="/images/stamp.png" alt="मुख्याध्यापक शिक्का">
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Bottom: date only -->
+  <div class="bottom-row">
+    <div class="date-field">
+      <span>दिनांक&nbsp;</span>
+      <span>:</span>
+      <span class="date-val"><%= today %></span>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+  function goBack() {
+    if (window.opener && !window.opener.closed) { window.close(); }
+    else if (window.history.length > 1) { window.history.back(); }
+    else { window.location.href = '/teacher/students/<%= student._id %>'; }
+  }
+</script>
+</body>
+</html>

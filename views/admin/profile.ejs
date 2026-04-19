@@ -1,0 +1,105 @@
+<%- include('../partials/admin-layout-head') %>
+<% activePage = 'profile'; %>
+<div class="app-shell">
+<%- include('../partials/admin-sidebar') %>
+<main class="main-content">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu"><i class="fas fa-bars"></i></button>
+      <div>
+        <div class="page-title">माझी प्रोफाइल <span style="font-family:'DM Sans',sans-serif;font-size:14px;color:#94a3b8;font-weight:400;">My Profile</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="page-content">
+    <% if(error) { %><div class="alert-box alert-error"><i class="fas fa-exclamation-circle"></i> <%= error %></div><% } %>
+    <% if(success) { %><div class="alert-box alert-success"><i class="fas fa-check-circle"></i> <%= success %></div><% } %>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="fas fa-user-cog"></i> प्रोफाइल माहिती / Profile Information</div></div>
+        <div class="card-body">
+          <div class="profile-header" style="margin-bottom:24px;">
+            <div class="profile-avatar">
+              <% if(admin.profilePhoto) { %><img src="<%= admin.profilePhoto %>" alt=""/><% } else { %><i class="fas fa-user-shield"></i><% } %>
+            </div>
+            <div>
+              <div class="profile-name"><%= admin.name %></div>
+              <div class="profile-role">मुख्याध्यापक / Principal</div>
+              <div style="color:rgba(255,255,255,.5);font-size:13px;margin-top:6px;"><%= admin.email %></div>
+            </div>
+          </div>
+          <form method="POST" action="/admin/profile" enctype="multipart/form-data">
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <div class="form-group">
+                <label class="label">पूर्ण नाव / Full Name</label>
+                <input type="text" name="name" class="input" value="<%= admin.name %>" required/>
+              </div>
+              <div class="form-group">
+                <label class="label">ईमेल / Email Address</label>
+                <input type="email" name="email" class="input" value="<%= admin.email %>" required/>
+              </div>
+              <div class="form-group">
+                <label class="label">फोन / Phone</label>
+                <input type="tel" name="phone" class="input" value="<%= admin.phone || '' %>"/>
+              </div>
+              <div class="form-group">
+                <label class="label">प्रोफाइल फोटो / Profile Photo</label>
+                <input type="file" name="profilePhoto" class="input" accept="image/*" style="padding:8px;"/>
+              </div>
+              <button type="submit" class="topbar-btn btn-gold" style="width:fit-content;padding:12px 24px;"><i class="fas fa-save"></i> प्रोफाइल अपडेट करा / Update Profile</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="fas fa-lock"></i> पासवर्ड बदला / Change Password</div></div>
+        <div class="card-body">
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div class="form-group">
+              <label class="label">सध्याचा पासवर्ड / Current Password</label>
+              <input type="password" id="currentPass" class="input" placeholder="सध्याचा पासवर्ड टाका / Enter current password"/>
+            </div>
+            <div class="form-group">
+              <label class="label">नवीन पासवर्ड / New Password</label>
+              <input type="password" id="newPass" class="input" placeholder="किमान ६ अक्षरे / Min 6 characters"/>
+            </div>
+            <div class="form-group">
+              <label class="label">पुन्हा नवीन पासवर्ड / Confirm New Password</label>
+              <input type="password" id="confirmPass" class="input" placeholder="नवीन पासवर्ड पुन्हा टाका / Repeat new password"/>
+            </div>
+            <div id="passMsg"></div>
+            <button onclick="changePassword()" class="topbar-btn btn-gold" style="width:fit-content;padding:12px 24px;"><i class="fas fa-key"></i> पासवर्ड बदला / Change Password</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+<script>
+function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebarOverlay').classList.toggle('show'); }
+function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('show'); }
+function showToast(message, type='success'){
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<i class="fas fa-${type==='success'?'check-circle':'exclamation-circle'}" style="color:${type==='success'?'#16a34a':'#dc2626'}"></i>${message}`;
+  c.appendChild(t);
+  setTimeout(()=>t.remove(), 3500);
+}
+function changePassword(){
+  const currentPassword = document.getElementById('currentPass').value;
+  const newPassword = document.getElementById('newPass').value;
+  const confirmPassword = document.getElementById('confirmPass').value;
+  if(!currentPassword || !newPassword || !confirmPassword) return showToast('सर्व फील्ड भरा / All fields required','error');
+  fetch('/admin/change-password', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({currentPassword, newPassword, confirmPassword})
+  }).then(r=>r.json()).then(d=>{
+    showToast(d.message, d.success?'success':'error');
+    if(d.success){document.getElementById('currentPass').value='';document.getElementById('newPass').value='';document.getElementById('confirmPass').value='';}
+  });
+}
+</script>
+</body></html>

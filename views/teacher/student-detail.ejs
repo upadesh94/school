@@ -1,0 +1,235 @@
+<%- include('../partials/teacher-layout-head') %>
+<% activePage = 'students'; %>
+<div class="app-shell">
+<%- include('../partials/teacher-sidebar') %>
+<main class="main-content">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <div class="page-title" style="font-family:'Noto Sans Devanagari',sans-serif;"><%= student.name %></div>
+    </div>
+    <div class="topbar-right">
+      <a href="/teacher/students/<%= student._id %>/edit" class="topbar-btn btn-gold"><i class="fas fa-edit"></i> संपादन</a>
+      <a href="/teacher/students" class="topbar-btn btn-outline"><i class="fas fa-arrow-left"></i> यादी</a>
+    </div>
+  </div>
+
+  <div class="page-content">
+    <% if(success) { %>
+    <div class="alert-box alert-success" style="margin-bottom:16px;"><i class="fas fa-check-circle"></i> <%=success%></div>
+    <% } %>
+
+    <%
+    const fmtD = (d) => d ? new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
+    const v = (f) => student[f] || '—';
+    %>
+
+    <%# ── Certificate Action Cards ────────────────────── %>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+      <!-- Bonafide -->
+      <div class="card" style="border-left:4px solid #1a237e;">
+        <div class="card-body" style="display:flex;align-items:center;gap:14px;padding:16px;">
+          <div style="width:48px;height:48px;border-radius:10px;background:#e8eaf6;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">📜</div>
+          <div style="flex:1;">
+            <div style="font-size:15px;font-weight:700;color:#1a237e;font-family:'Noto Sans Devanagari',sans-serif;">बोनाफाईड प्रमाणपत्र</div>
+            <div style="font-size:11px;color:#64748b;">Bonafide Certificate</div>
+            <% if(student.bonafideGenerated) { %><div style="font-size:11px;color:#2e7d32;margin-top:3px;">✅ <%= fmtD(student.bonafideGeneratedAt) %></div><% } %>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <a href="/teacher/students/<%= student._id %>/bonafide" target="_blank" class="topbar-btn btn-gold" style="font-size:12px;padding:7px 12px;white-space:nowrap;">👁 पाहा</a>
+            <a href="/teacher/students/<%= student._id %>/bonafide/download" class="topbar-btn btn-outline" style="font-size:12px;padding:7px 12px;white-space:nowrap;">⬇ Word</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Utara -->
+      <div class="card" style="border-left:4px solid #c9a84c;">
+        <div class="card-body" style="display:flex;align-items:center;gap:14px;padding:16px;">
+          <div style="width:48px;height:48px;border-radius:10px;background:#fffbeb;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">📋</div>
+          <div style="flex:1;">
+            <div style="font-size:15px;font-weight:700;color:#0f1f3d;font-family:'Noto Sans Devanagari',sans-serif;">प्रवेश निर्गम उतारा</div>
+            <div style="font-size:11px;color:#64748b;">Pravesh Nirgam Utara</div>
+            <% if(student.utaraGenerated) { %><div style="font-size:11px;color:#2e7d32;margin-top:3px;">✅ <%= fmtD(student.utaraGeneratedAt) %></div><% } %>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <a href="/teacher/students/<%= student._id %>/utara" target="_blank" class="topbar-btn btn-gold" style="font-size:12px;padding:7px 12px;white-space:nowrap;">👁 पाहा</a>
+            <a href="/teacher/students/<%= student._id %>/utara/download" class="topbar-btn btn-outline" style="font-size:12px;padding:7px 12px;white-space:nowrap;">⬇ Word</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%# ── Info Grid ────────────────────────────────────── %>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+      <%# LEFT column %>
+      <div style="display:flex;flex-direction:column;gap:20px;">
+
+        <!-- 🆔 Identifiers -->
+        <div class="card">
+          <div class="card-header" style="background:#e3f2fd15;border-bottom:2px solid #1565C020;">
+            <div class="card-title" style="color:#1565C0;font-size:13px;"><i class="fas fa-id-card"></i>&nbsp; 🆔 ओळख माहिती</div>
+          </div>
+          <div class="card-body" style="padding:0;">
+            <table style="width:100%;font-size:13px;">
+              <% [
+                ['प्रवेश क्रमांक', v('enrollmentId')],
+                ['क्रमांक (Roll No.)', v('rollNo')],
+                ['आधार नं.', v('aadharNo')],
+                ['सरल आय. डि. नं', v('saralId')],
+                ['युडायस नंबर', v('udiseNo')],
+              ].forEach(([l,val]) => { %>
+              <tr style="border-bottom:1px solid #f1f5f9;">
+                <td style="padding:9px 14px;color:#64748b;font-weight:600;width:46%;font-family:'Noto Sans Devanagari',sans-serif;"><%=l%></td>
+                <td style="padding:9px 14px;color:#0f1f3d;font-weight:500;font-family:'Noto Sans Devanagari',sans-serif;"><%=val%></td>
+              </tr>
+              <% }) %>
+            </table>
+          </div>
+        </div>
+
+        <!-- 👤 Personal -->
+        <div class="card">
+          <div class="card-header" style="background:#fce4ec15;border-bottom:2px solid #c2185b20;">
+            <div class="card-title" style="color:#c2185b;font-size:13px;"><i class="fas fa-user"></i>&nbsp; 👤 वैयक्तिक माहिती</div>
+          </div>
+          <div class="card-body" style="padding:0;">
+            <table style="width:100%;font-size:13px;">
+              <% [
+                ['जन्म दिनांक (अंकात)', fmtD(student.dateOfBirth)],
+                ['जन्म दिनांक (अक्षरी)', v('dateOfBirthInWords')],
+                ['लिंग', v('gender')],
+                ['राष्ट्रीयत्व', v('nationality')],
+                ['जन्मस्थळ', v('birthPlace')],
+              ].forEach(([l,val]) => { %>
+              <tr style="border-bottom:1px solid #f1f5f9;">
+                <td style="padding:9px 14px;color:#64748b;font-weight:600;width:46%;font-family:'Noto Sans Devanagari',sans-serif;"><%=l%></td>
+                <td style="padding:9px 14px;color:#0f1f3d;font-weight:500;font-family:'Noto Sans Devanagari',sans-serif;"><%=val%></td>
+              </tr>
+              <% }) %>
+            </table>
+          </div>
+        </div>
+
+        <!-- 🏷️ धर्म/जात -->
+        <div class="card">
+          <div class="card-header" style="background:#f3e5f515;border-bottom:2px solid #6A1B9A20;">
+            <div class="card-title" style="color:#6A1B9A;font-size:13px;"><i class="fas fa-tag"></i>&nbsp; 🏷️ धर्म / जात / भाषा</div>
+          </div>
+          <div class="card-body" style="padding:0;">
+            <table style="width:100%;font-size:13px;">
+              <% [
+                ['धर्म', v('religion')],
+                ['जात', v('caste')],
+                ['प्रवर्ग', v('category')],
+                ['मातृभाषा', v('motherTongue')],
+                ['सर्वसाधारण वर्तणूक', v('generalConduct')],
+              ].forEach(([l,val]) => { %>
+              <tr style="border-bottom:1px solid #f1f5f9;">
+                <td style="padding:9px 14px;color:#64748b;font-weight:600;width:46%;font-family:'Noto Sans Devanagari',sans-serif;"><%=l%></td>
+                <td style="padding:9px 14px;color:#0f1f3d;font-weight:500;font-family:'Noto Sans Devanagari',sans-serif;"><%=val%></td>
+              </tr>
+              <% }) %>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <%# RIGHT column %>
+      <div style="display:flex;flex-direction:column;gap:20px;">
+
+        <!-- 👨‍👩‍👧 Family -->
+        <div class="card">
+          <div class="card-header" style="background:#e8f5e915;border-bottom:2px solid #2e7d3220;">
+            <div class="card-title" style="color:#2e7d32;font-size:13px;"><i class="fas fa-users"></i>&nbsp; 👨‍👩‍👧 कुटुंब माहिती</div>
+          </div>
+          <div class="card-body" style="padding:0;">
+            <table style="width:100%;font-size:13px;">
+              <% [
+                ['वडिलांचे नाव', v('fatherName')],
+                ['आईचे नाव', v('motherName')],
+                ['पालकाचे नाव', v('guardianName')],
+                ['पालकाचा संपर्क', v('parentContact')],
+                ['पालकाचा ईमेल', v('parentEmail')],
+                ['पत्ता', v('address')],
+              ].forEach(([l,val]) => { %>
+              <tr style="border-bottom:1px solid #f1f5f9;">
+                <td style="padding:9px 14px;color:#64748b;font-weight:600;width:46%;font-family:'Noto Sans Devanagari',sans-serif;"><%=l%></td>
+                <td style="padding:9px 14px;color:#0f1f3d;font-weight:500;font-family:'Noto Sans Devanagari',sans-serif;"><%=val%></td>
+              </tr>
+              <% }) %>
+            </table>
+          </div>
+        </div>
+
+        <!-- 📚 Academic -->
+        <div class="card">
+          <div class="card-header" style="background:#fff8e115;border-bottom:2px solid #E6510020;">
+            <div class="card-title" style="color:#E65100;font-size:13px;"><i class="fas fa-school"></i>&nbsp; 📚 शालेय माहिती</div>
+          </div>
+          <div class="card-body" style="padding:0;">
+            <table style="width:100%;font-size:13px;">
+              <% [
+                ['वर्ग', student.currentClass + (student.currentSection ? ' — ' + student.currentSection : '')],
+                ['शैक्षणिक वर्ष', v('academicYear')],
+                ['प्रवेश दिनांक', fmtD(student.admissionDate)],
+                ['प्रवेशाच्या वेळेस वर्ग', v('admissionClass')],
+                ['पूर्वीची शाळा', v('previousSchool')],
+              ].forEach(([l,val]) => { %>
+              <tr style="border-bottom:1px solid #f1f5f9;">
+                <td style="padding:9px 14px;color:#64748b;font-weight:600;width:46%;font-family:'Noto Sans Devanagari',sans-serif;"><%=l%></td>
+                <td style="padding:9px 14px;color:#0f1f3d;font-weight:500;font-family:'Noto Sans Devanagari',sans-serif;"><%=val%></td>
+              </tr>
+              <% }) %>
+            </table>
+          </div>
+        </div>
+
+        <!-- 🚪 Leaving / TC -->
+        <div class="card">
+          <div class="card-header" style="background:#fce4ec15;border-bottom:2px solid #b71c1c20;">
+            <div class="card-title" style="color:#b71c1c;font-size:13px;"><i class="fas fa-door-open"></i>&nbsp; 🚪 शाळा सोडणे / TC</div>
+          </div>
+          <div class="card-body" style="padding:0;">
+            <table style="width:100%;font-size:13px;">
+              <% [
+                ['शाळा सोडताना वर्ग', v('leavingClass')],
+                ['शाळा सोडताना दिनांक', fmtD(student.leavingDate)],
+                ['शाळा सोडण्याचे कारण', v('reasonForLeaving')],
+                ['शेरा', v('remarks')],
+              ].forEach(([l,val]) => { %>
+              <tr style="border-bottom:1px solid #f1f5f9;">
+                <td style="padding:9px 14px;color:#64748b;font-weight:600;width:46%;font-family:'Noto Sans Devanagari',sans-serif;"><%=l%></td>
+                <td style="padding:9px 14px;color:#0f1f3d;font-weight:500;font-family:'Noto Sans Devanagari',sans-serif;"><%=val%></td>
+              </tr>
+              <% }) %>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Delete -->
+    <div style="margin-top:20px;text-align:right;">
+      <button onclick="deleteStudent()" class="topbar-btn" style="background:#fff;border:1px solid #ef4444;color:#ef4444;padding:10px 20px;">
+        <i class="fas fa-trash"></i> विद्यार्थी हटवा
+      </button>
+    </div>
+
+  </div>
+</main>
+</div>
+<script>
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+function deleteStudent() {
+  if (!confirm('हा विद्यार्थी कायमचा हटवायचा आहे का?')) return;
+  fetch('/teacher/students/<%= student._id %>/delete', { method:'POST' })
+    .then(r=>r.json()).then(d=>{
+      if(d.success){alert('विद्यार्थी हटवला!');location.href='/teacher/students';}
+      else alert('त्रुटी: '+d.message);
+    });
+}
+</script>
+</body></html>

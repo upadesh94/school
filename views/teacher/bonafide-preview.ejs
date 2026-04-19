@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>बोनाफाईड सर्टिफिकेट</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Noto Sans Devanagari',sans-serif; background:#f0f2f5; }
+
+    .toolbar {
+      background:#1a237e; padding:14px 28px; display:flex; align-items:center;
+      justify-content:space-between; position:sticky; top:0; z-index:100;
+      box-shadow:0 2px 8px rgba(0,0,0,0.3);
+    }
+    .toolbar-title { color:#fff; font-size:18px; font-weight:700; }
+    .toolbar-sub { color:#c5cae9; font-size:13px; margin-top:2px; }
+    .toolbar-btns { display:flex; gap:10px; }
+    .btn-t {
+      padding:9px 20px; border:none; border-radius:7px; font-size:14px;
+      font-family:'Noto Sans Devanagari',sans-serif; cursor:pointer; font-weight:600;
+      text-decoration:none; display:inline-flex; align-items:center; gap:6px;
+    }
+    .btn-back { background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.3); cursor:pointer; }
+    .btn-print { background:#ff9800; color:#fff; }
+    .btn-dl { background:#43a047; color:#fff; }
+
+    .page-wrap { display:flex; justify-content:center; padding:30px 20px 60px; }
+
+    .certificate {
+      background:#fff; width:794px; min-height:1050px; padding:40px 52px;
+      box-shadow:0 4px 24px rgba(0,0,0,0.12); border-radius:4px;
+      font-family:'Noto Sans Devanagari',sans-serif;
+    }
+    .school-name { text-align:center; font-size:26px; font-weight:700; margin-bottom:4px; }
+    .school-address { text-align:center; font-size:15px; font-weight:700; margin-bottom:14px; }
+    .divider-double { border:none; border-bottom:4px double #000; margin-bottom:20px; }
+    .cert-title { text-align:center; font-size:30px; font-weight:700; margin-bottom:24px; text-decoration:underline; }
+
+    /* Aadhar row — tighter spacing */
+    .field-row {
+      display:grid; grid-template-columns:120px 14px 1fr;
+      font-size:15px; font-weight:700; line-height:2.2;
+    }
+    .body-text { font-size:15px; font-weight:700; line-height:2.4; margin-top:8px; }
+    .body-text p { margin:0; }
+    .uline { display:inline-block; border-bottom:1.5px solid #000; min-width:80px; }
+
+    .date-row {
+      display:grid; grid-template-columns:75px 14px 1fr;
+      margin-top:28px; font-size:15px; font-weight:700; line-height:2;
+    }
+    .sig-row { display:flex; justify-content:space-between; margin-top:40px; }
+    .sig-block { width:45%; }
+    .sig-space { height:80px; display:flex; align-items:flex-end; padding-bottom:4px; }
+    .stamp-img { height:80px; width:auto; object-fit:contain; }
+    .sig-line { border-top:2px solid #000; padding-top:4px; font-size:14px; font-weight:700; }
+    .sig-block.right .sig-line { text-align:right; }
+    .sig-block.right .sig-space { justify-content:flex-end; }
+
+    @page {
+      size: A4 portrait;
+      margin: 18mm 16mm;
+    }
+    @media print {
+      html,body { -webkit-print-color-adjust:exact; print-color-adjust:exact; background:#fff!important; margin:0!important; padding:0!important; }
+      .toolbar { display:none!important; }
+      .page-wrap { padding:0!important; background:transparent!important; }
+      .certificate { width:100%!important; box-shadow:none!important; border-radius:0!important; padding:0!important; min-height:0!important; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="toolbar">
+  <div>
+    <div class="toolbar-title">📜 बोनाफाईड सर्टिफिकेट</div>
+    <div class="toolbar-sub"><%= student.name %> | वर्ग <%= student.currentClass %></div>
+  </div>
+  <div class="toolbar-btns">
+    <button onclick="goBack()" class="btn-t btn-back">← परत जा</button>
+    <button onclick="window.print()" class="btn-t btn-print">🖨️ Print / PDF</button>
+    <a href="/teacher/students/<%= student._id %>/bonafide/download" class="btn-t btn-dl">⬇ Word (.docx)</a>
+  </div>
+</div>
+
+<div class="page-wrap">
+  <div class="certificate">
+
+    <div class="school-name">तुलजाभवानी माध्यमिक विद्यालय</div>
+    <div class="school-address">वासुसायगाव, ता. गंगापूर</div>
+    <hr class="divider-double">
+    <div class="cert-title">बोनाफाईड सर्टिफिकेट</div>
+
+    <!-- Aadhar row — tight label:colon:value -->
+    <div class="field-row">
+      <span>आधार नं.</span>
+      <span>:</span>
+      <span><%= student.aadharNo || '' %></span>
+    </div>
+
+    <div class="body-text">
+      <p>देण्यात&nbsp;&nbsp;&nbsp;येते&nbsp;&nbsp;&nbsp;की,&nbsp;<span class="uline" style="min-width:220px;"><%= student.name || '' %></span></p>
+      <p>हा&nbsp;/&nbsp;ही&nbsp;&nbsp;&nbsp;या&nbsp;&nbsp;&nbsp;शाळेचा&nbsp;&nbsp;&nbsp;विद्यार्थी&nbsp;/&nbsp;विद्यार्थिनी&nbsp;&nbsp;&nbsp;असून&nbsp;&nbsp;&nbsp;शैक्षणिक&nbsp;&nbsp;&nbsp;वर्ष&nbsp;&nbsp;(<span class="uline" style="min-width:120px;">&nbsp;<%= student.academicYear || '' %>&nbsp;</span>)&nbsp;&nbsp;&nbsp;मध्ये&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+      <p><span class="uline" style="min-width:100px;"><%= (student.currentClass || '') + (student.currentSection ? ' ' + student.currentSection : '') %></span>&nbsp;&nbsp;&nbsp;वर्गात&nbsp;&nbsp;&nbsp;&nbsp;शिक्षण&nbsp;&nbsp;&nbsp;घेत&nbsp;&nbsp;&nbsp;आहे.&nbsp;/&nbsp;होता.&nbsp;&nbsp;&nbsp;शाळेच्या&nbsp;&nbsp;&nbsp;&nbsp;जनरल&nbsp;&nbsp;&nbsp;&nbsp;रजिस्टर&nbsp;&nbsp;&nbsp;&nbsp;नुसार&nbsp;&nbsp;&nbsp;त्याची&nbsp;&nbsp;&nbsp;&nbsp;</p>
+      <p>जन्म&nbsp;&nbsp;&nbsp;तारीख&nbsp;&nbsp;&nbsp;&nbsp;(अंकी)&nbsp;&nbsp;<span class="uline" style="min-width:110px;"><%= student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric'}) : '' %></span>&nbsp;&nbsp;&nbsp;(अक्षरी)&nbsp;&nbsp;<span class="uline" style="min-width:200px;"><%= student.dateOfBirthInWords || '' %></span></p>
+      <p>_________________________________________________________________________&nbsp;&nbsp;ही असू</p>
+      <p>जात&nbsp;&nbsp;<span class="uline" style="min-width:140px;"><%= student.caste || '' %></span>&nbsp;&nbsp;ही&nbsp;&nbsp;&nbsp;आहे.&nbsp;&nbsp;&nbsp;तसेच&nbsp;&nbsp;&nbsp;सदर&nbsp;&nbsp;विद्यार्थ्यांची&nbsp;&nbsp;वर्तणूक&nbsp;&nbsp;चांगली&nbsp;&nbsp;आहे.</p>
+    </div>
+
+    <div class="date-row">
+      <span>दिनांक</span>
+      <span>:</span>
+      <span><%= new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric'}) %></span>
+    </div>
+
+    <div class="sig-row">
+      <div class="sig-block left">
+        <div class="sig-space"></div>
+        <div class="sig-line">लिपिक</div>
+      </div>
+      <div class="sig-block right">
+        <!-- Stamp image above the signature line -->
+        <div class="sig-space">
+          <img src="/images/stamp.png" class="stamp-img" alt="मुख्याध्यापक शिक्का">
+        </div>
+        <div class="sig-line">मुख्याध्यापक / प्राचार्य</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function goBack() {
+    // If this tab was opened from another tab (opener exists), close this tab — parent stays intact
+    if (window.opener && !window.opener.closed) {
+      window.close();
+    } else if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = '/teacher/students/<%= student._id %>';
+    }
+  }
+</script>
+</body>
+</html>

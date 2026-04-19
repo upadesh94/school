@@ -1,0 +1,41 @@
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><i class="fas fa-graduation-cap"></i></div>
+    <div class="brand-text">
+      <div class="brand-name" style="font-family:'Noto Sans Devanagari',sans-serif;font-size:11px;line-height:1.3;">तुलजाभवानी विद्यालय</div>
+      <div class="brand-role">Principal Panel</div>
+    </div>
+  </div>
+  <div class="sidebar-user">
+    <div class="user-avatar">
+      <% if(admin && admin.profilePhoto) { %><img src="<%= admin.profilePhoto %>" alt=""/><% } else { %><i class="fas fa-user-shield"></i><% } %>
+    </div>
+    <div class="user-info">
+      <div class="user-name"><%= admin ? admin.name : 'मुख्याध्यापक' %></div>
+      <div class="user-badge">Principal / मुख्याध्यापक</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-title">मुख्य / Main</div>
+    <a href="/admin/dashboard" class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'dashboard' ? 'active' : '' %>">
+      <i class="fas fa-tachometer-alt nav-icon"></i><span>डॅशबोर्ड <span style="opacity:.6;font-size:11px;">Dashboard</span></span>
+    </a>
+    <a href="/admin/teachers" class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'teachers' ? 'active' : '' %>">
+      <i class="fas fa-chalkboard-teacher nav-icon"></i><span>शिक्षक <span style="opacity:.6;font-size:11px;">Teachers</span></span>
+    </a>
+    <a href="/admin/students" class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'students' ? 'active' : '' %>">
+      <i class="fas fa-users nav-icon"></i><span>विद्यार्थी <span style="opacity:.6;font-size:11px;">Students</span></span>
+    </a>
+    <div class="nav-section-title">नोंदी / Records</div>
+    <a href="/admin/activities" class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'activities' ? 'active' : '' %>">
+      <i class="fas fa-history nav-icon"></i><span>नोंदी <span style="opacity:.6;font-size:11px;">Activity Log</span></span>
+    </a>
+    <div class="nav-section-title">खाते / Account</div>
+    <a href="/admin/profile" class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'profile' ? 'active' : '' %>">
+      <i class="fas fa-user-cog nav-icon"></i><span>माझी प्रोफाइल <span style="opacity:.6;font-size:11px;">My Profile</span></span>
+    </a>
+    <a href="/auth/logout" class="nav-link nav-link-logout">
+      <i class="fas fa-sign-out-alt nav-icon"></i><span>बाहेर पडा <span style="opacity:.6;font-size:11px;">Logout</span></span>
+    </a>
+  </nav>
+</aside>

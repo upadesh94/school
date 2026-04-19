@@ -1,0 +1,160 @@
+<%- include('../partials/admin-layout-head') %>
+<% activePage = 'teachers'; %>
+<div class="app-shell">
+<%- include('../partials/admin-sidebar') %>
+<main class="main-content">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu"><i class="fas fa-bars"></i></button>
+      <div>
+        <div class="page-title">
+          <%= teacher ? 'शिक्षक संपादन' : 'शिक्षक जोडा' %>
+          <span style="font-family:'DM Sans',sans-serif;font-size:14px;color:#94a3b8;font-weight:400;"><%= teacher ? 'Edit Teacher' : 'Add Teacher' %></span>
+        </div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <a href="/admin/teachers" class="topbar-btn btn-outline"><i class="fas fa-arrow-left"></i> परत / Back</a>
+    </div>
+  </div>
+  <div class="page-content">
+    <% if(error) { %><div class="alert-box alert-error"><i class="fas fa-exclamation-circle"></i> <%= error %></div><% } %>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <i class="fas fa-user-plus"></i>
+          <%= teacher ? 'शिक्षक माहिती संपादन / Edit Teacher Details' : 'नवीन शिक्षक नोंदणी / New Teacher Registration' %>
+        </div>
+      </div>
+      <div class="card-body">
+        <form method="POST" action="/admin/teachers/<%= teacher ? 'edit/'+teacher._id : 'add' %>" enctype="multipart/form-data">
+          
+          <!-- Section: Basic Info -->
+          <div style="background:#f8faff;border-radius:10px;padding:16px;margin-bottom:20px;border-left:4px solid #1d3461;">
+            <div style="font-size:13px;font-weight:700;color:#0f1f3d;margin-bottom:14px;font-family:'Noto Sans Devanagari',sans-serif;">
+              <i class="fas fa-id-card" style="margin-right:8px;color:#c9a84c;"></i>मूलभूत माहिती / Basic Information
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="label">पूर्ण नाव / Full Name <span style="color:red">*</span></label>
+                <input type="text" name="name" class="input" required value="<%= teacher ? teacher.name : '' %>" placeholder="शिक्षकाचे पूर्ण नाव / Teacher's full name"/>
+              </div>
+              <div class="form-group">
+                <label class="label">ईमेल / Email Address <span style="color:red">*</span></label>
+                <input type="email" name="email" class="input" required value="<%= teacher ? teacher.email : '' %>" placeholder="teacher@school.com"/>
+              </div>
+              <div class="form-group">
+                <label class="label">फोन नंबर / Phone Number</label>
+                <input type="tel" name="phone" class="input" value="<%= teacher ? teacher.phone : '' %>" placeholder="+91 XXXXX XXXXX"/>
+              </div>
+              <div class="form-group">
+                <label class="label">शैक्षणिक पात्रता / Qualification</label>
+                <input type="text" name="qualification" class="input" value="<%= teacher ? teacher.qualification : '' %>" placeholder="B.Ed, M.Sc, etc."/>
+              </div>
+              <div class="form-group">
+                <label class="label">लिंग / Gender</label>
+                <select name="gender" class="select">
+                  <option value="">-- निवडा / Select --</option>
+                  <option value="Male" <%= teacher && teacher.gender === 'Male' ? 'selected' : '' %>>पुरुष / Male</option>
+                  <option value="Female" <%= teacher && teacher.gender === 'Female' ? 'selected' : '' %>>महिला / Female</option>
+                  <option value="Other" <%= teacher && teacher.gender === 'Other' ? 'selected' : '' %>>इतर / Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="label">जन्म दिनांक / Date of Birth</label>
+                <input type="date" name="dateOfBirth" class="input" value="<%= teacher && teacher.dateOfBirth ? teacher.dateOfBirth.toISOString().split('T')[0] : '' %>"/>
+              </div>
+              <div class="form-group">
+                <label class="label">रुजू दिनांक / Joining Date</label>
+                <input type="date" name="joiningDate" class="input" value="<%= teacher && teacher.joiningDate ? teacher.joiningDate.toISOString().split('T')[0] : '' %>"/>
+              </div>
+              <div class="form-group">
+                <label class="label">प्रोफाइल फोटो / Profile Photo</label>
+                <input type="file" name="profilePhoto" class="input" accept="image/*" style="padding:8px;"/>
+                <% if(teacher && teacher.profilePhoto) { %>
+                <img src="<%= teacher.profilePhoto %>" alt="" style="width:52px;height:52px;border-radius:50%;margin-top:8px;object-fit:cover;border:2px solid var(--gold);"/>
+                <% } %>
+              </div>
+              <div class="form-group full">
+                <label class="label">पत्ता / Address</label>
+                <textarea name="address" class="textarea" placeholder="संपूर्ण पत्ता / Full address"><%= teacher ? teacher.address : '' %></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section: Academic Assignment -->
+          <div style="background:#fffdf5;border-radius:10px;padding:16px;margin-bottom:20px;border-left:4px solid #c9a84c;">
+            <div style="font-size:13px;font-weight:700;color:#0f1f3d;margin-bottom:14px;font-family:'Noto Sans Devanagari',sans-serif;">
+              <i class="fas fa-chalkboard" style="margin-right:8px;color:#c9a84c;"></i>वर्ग नियुक्ती / Class Assignment
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="label">विषय / Subject</label>
+                <input type="text" name="subject" class="input" value="<%= teacher ? teacher.subject : '' %>" placeholder="गणित, विज्ञान, इंग्रजी / Mathematics, Science..."/>
+              </div>
+              <div class="form-group">
+                <label class="label">
+                  नियुक्त वर्ग / Class Assigned
+                  <span style="font-size:10px;color:#c9a84c;display:block;margin-top:2px;">(वर्गशिक्षक / Class Teacher)</span>
+                </label>
+                <select name="classAssigned" class="select">
+                  <option value="">-- नियुक्त नाही / Not Assigned --</option>
+                  <option value="१ली" <%= teacher && teacher.classAssigned === '१ली' ? 'selected' : '' %>>१ली (1st)</option>
+                  <option value="२री" <%= teacher && teacher.classAssigned === '२री' ? 'selected' : '' %>>२री (2nd)</option>
+                  <option value="३री" <%= teacher && teacher.classAssigned === '३री' ? 'selected' : '' %>>३री (3rd)</option>
+                  <option value="४थी" <%= teacher && teacher.classAssigned === '४थी' ? 'selected' : '' %>>४थी (4th)</option>
+                  <option value="५वी" <%= teacher && teacher.classAssigned === '५वी' ? 'selected' : '' %>>५वी (5th)</option>
+                  <option value="६वी" <%= teacher && teacher.classAssigned === '६वी' ? 'selected' : '' %>>६वी (6th)</option>
+                  <option value="७वी" <%= teacher && teacher.classAssigned === '७वी' ? 'selected' : '' %>>७वी (7th)</option>
+                  <option value="८वी" <%= teacher && teacher.classAssigned === '८वी' ? 'selected' : '' %>>८वी (8th)</option>
+                  <option value="९वी" <%= teacher && teacher.classAssigned === '९वी' ? 'selected' : '' %>>९वी (9th)</option>
+                  <option value="१०वी" <%= teacher && teacher.classAssigned === '१०वी' ? 'selected' : '' %>>१०वी (10th)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="label">तुकडी / Section / Division</label>
+                <select name="section" class="select">
+                  <option value="">-- तुकडी नाही / No Section --</option>
+                  <option value="A" <%= teacher && teacher.section === 'A' ? 'selected' : '' %>>A तुकडी</option>
+                  <option value="B" <%= teacher && teacher.section === 'B' ? 'selected' : '' %>>B तुकडी</option>
+                  <option value="C" <%= teacher && teacher.section === 'C' ? 'selected' : '' %>>C तुकडी</option>
+                  <option value="D" <%= teacher && teacher.section === 'D' ? 'selected' : '' %>>D तुकडी</option>
+                </select>
+              </div>
+              <% if(teacher) { %>
+              <div class="form-group">
+                <label class="label">खाते स्थिती / Account Status</label>
+                <select name="isActive" class="select">
+                  <option value="true" <%= teacher.isActive ? 'selected' : '' %>>✅ सक्रिय / Active</option>
+                  <option value="false" <%= !teacher.isActive ? 'selected' : '' %>>❌ निष्क्रिय / Inactive</option>
+                </select>
+              </div>
+              <% } %>
+            </div>
+          </div>
+
+          <% if(!teacher) { %>
+          <div class="alert-box alert-info" style="margin-bottom:20px;">
+            <i class="fas fa-info-circle"></i>
+            लॉगिन पासवर्ड आपोआप तयार होईल आणि शिक्षकाच्या ईमेलवर पाठवला जाईल.<br>
+            <small style="opacity:.75;">A login password will be auto-generated and emailed to the teacher.</small>
+          </div>
+          <% } %>
+
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <button type="submit" class="topbar-btn btn-gold" style="padding:12px 28px;font-size:15px;">
+              <i class="fas fa-save"></i> <%= teacher ? 'माहिती अपडेट करा / Update' : 'शिक्षक जोडा व ईमेल पाठवा / Add & Send Email' %>
+            </button>
+            <a href="/admin/teachers" class="topbar-btn btn-outline" style="padding:12px 20px;">रद्द करा / Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+<script>
+function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebarOverlay').classList.toggle('show'); }
+function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('show'); }
+</script>
+</body></html>

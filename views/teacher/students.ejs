@@ -1,0 +1,283 @@
+<%- include('../partials/teacher-layout-head') %>
+<% activePage = 'students'; %>
+<div class="app-shell">
+<%- include('../partials/teacher-sidebar') %>
+<main class="main-content">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <div class="page-title">विद्यार्थी यादी</div>
+    </div>
+    <div class="topbar-right">
+      <a href="/teacher/students/add" class="topbar-btn btn-gold"><i class="fas fa-plus"></i> नवीन विद्यार्थी</a>
+      <a href="/teacher/upload-excel" class="topbar-btn btn-outline"><i class="fas fa-file-excel"></i> Excel</a>
+    </div>
+  </div>
+  <div class="page-content">
+    <% if(success) { %><div class="alert-box alert-success"><i class="fas fa-check-circle"></i> <%=success%></div><% } %>
+
+    <!-- My Class Banner (shown when filtered from dashboard) -->
+    <% if(classFilter || sectionFilter) { %>
+    <div style="background:linear-gradient(135deg,#1b5e20,#2e7d32);color:#fff;border-radius:10px;padding:12px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-family:'Noto Sans Devanagari',sans-serif;font-size:15px;font-weight:700;">
+        <i class="fas fa-chalkboard-teacher" style="margin-right:8px;"></i>
+        माझा वर्ग: <%= classFilter || 'सर्व' %><% if(sectionFilter) { %> — <%= sectionFilter %> तुकडी<% } %> &nbsp;|&nbsp; <%= students.length %> विद्यार्थी
+      </div>
+      <a href="/teacher/students" style="color:#a5d6a7;font-size:12px;text-decoration:none;">✕ सर्व विद्यार्थी पहा</a>
+    </div>
+    <% } %>
+
+    <!-- Search/Filter -->
+    <div class="search-bar">
+      <form method="GET" action="/teacher/students" style="display:flex;gap:12px;width:100%;flex-wrap:wrap;">
+        <div class="search-wrap">
+          <i class="fas fa-search search-icon"></i>
+          <input type="text" name="search" class="input" placeholder="नाव, क्रमांक किंवा ID ने शोधा..." value="<%= search %>"/>
+        </div>
+        <select name="classFilter" class="select" style="width:140px;">
+          <option value="">सर्व वर्ग</option>
+          <% [['१ली','1st'],['२री','2nd'],['३री','3rd'],['४थी','4th'],['५वी','5th'],['६वी','6th'],['७वी','7th'],['८वी','8th'],['९वी','9th'],['१०वी','10th']].forEach(([mr]) => { %>
+          <option value="<%=mr%>" <%=classFilter===mr?'selected':''%>><%=mr%></option>
+          <% }) %>
+        </select>
+        <select name="sectionFilter" class="select" style="width:120px;">
+          <option value="">सर्व तुकडी</option>
+          <% ['A','B','C','D'].forEach(sec => { %>
+          <option value="<%=sec%>" <%=sectionFilter===sec?'selected':''%>><%=sec%> तुकडी</option>
+          <% }) %>
+        </select>
+        <button type="submit" class="topbar-btn btn-gold"><i class="fas fa-filter"></i> फिल्टर</button>
+        <a href="/teacher/students" class="topbar-btn btn-outline">साफ करा</a>
+      </form>
+    </div>
+
+    <!-- ── Bulk PDF Export Panel ─────────────────────────── -->
+    <div class="card" style="margin-bottom:20px;border-left:4px solid #d32f2f;">
+      <div class="card-header" style="background:#ffebee15;cursor:pointer;user-select:none;" onclick="toggleBulkPanel()">
+        <div class="card-title" style="color:#c62828;display:flex;justify-content:space-between;align-items:center;">
+          <span><i class="fas fa-file-pdf" style="color:#d32f2f;margin-right:8px;"></i>📄 सर्व Bonafide / Utara PDF एकत्र डाउनलोड करा</span>
+          <i class="fas fa-chevron-down" id="bulkChevron" style="transition:transform 0.2s;"></i>
+        </div>
+      </div>
+      <div id="bulkPdfPanel" style="display:none;">
+        <div class="card-body" style="padding:16px;">
+          <div style="font-size:12px;color:#555;margin-bottom:14px;font-family:'Noto Sans Devanagari',sans-serif;line-height:1.6;">
+            एका वर्गाच्या सर्व विद्यार्थ्यांचे <strong>Bonafide</strong> किंवा <strong>Utara</strong> एकाच PDF मध्ये डाउनलोड करा.
+            वर्ग निवडा → Document निवडा → Download PDF वर क्लिक करा.
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+            <div>
+              <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:4px;font-family:'Noto Sans Devanagari',sans-serif;">वर्ग निवडा</label>
+              <select id="bulkClass" class="select" style="min-width:140px;">
+                <option value="">सर्व वर्ग</option>
+                <% [['१ली','1st'],['२री','2nd'],['३री','3rd'],['४थी','4th'],['५वी','5th'],['६वी','6th'],['७वी','7th'],['८वी','8th'],['९वी','9th'],['१०वी','10th']].forEach(([mr]) => { %>
+                <option value="<%=mr%>" <%=classFilter===mr?'selected':''%>><%=mr%></option>
+                <% }) %>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:4px;font-family:'Noto Sans Devanagari',sans-serif;">तुकडी (Optional)</label>
+              <select id="bulkSection" class="select" style="width:110px;">
+                <option value="">सर्व</option>
+                <option value="A">A तुकडी</option>
+                <option value="B">B तुकडी</option>
+                <option value="C">C तुकडी</option>
+                <option value="D">D तुकडी</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <div style="font-size:11px;color:#555;font-weight:700;">📄 Word (.docx) — Word मध्ये उघडा, Print करा</div>
+                <div style="display:flex;gap:8px;">
+                  <button onclick="downloadBulkDocx('bonafide')" class="topbar-btn" style="background:#1a237e;color:#fff;padding:9px 16px;font-family:'Noto Sans Devanagari',sans-serif;font-size:13px;">
+                    <i class="fas fa-file-word"></i>&nbsp; 📜 सर्व Bonafide .docx
+                  </button>
+                  <button onclick="downloadBulkDocx('utara')" class="topbar-btn" style="background:#4a148c;color:#fff;padding:9px 16px;font-family:'Noto Sans Devanagari',sans-serif;font-size:13px;">
+                    <i class="fas fa-file-word"></i>&nbsp; 📋 सर्व Utara .docx
+                  </button>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <div style="font-size:11px;color:#555;font-weight:700;">🖨️ Print as PDF — नवीन tab मध्ये उघडेल, Print → Save as PDF</div>
+                <div style="display:flex;gap:8px;">
+                  <button onclick="openBulkHtml('bonafide')" class="topbar-btn" style="background:#2e7d32;color:#fff;padding:9px 16px;font-family:'Noto Sans Devanagari',sans-serif;font-size:13px;">
+                    <i class="fas fa-print"></i>&nbsp; 📜 Bonafide Print Page
+                  </button>
+                  <button onclick="openBulkHtml('utara')" class="topbar-btn" style="background:#e65100;color:#fff;padding:9px 16px;font-family:'Noto Sans Devanagari',sans-serif;font-size:13px;">
+                    <i class="fas fa-print"></i>&nbsp; 📋 Utara Print Page
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div id="bulkLoading" style="display:none;font-size:13px;color:#666;font-family:'Noto Sans Devanagari',sans-serif;">
+              <i class="fas fa-spinner fa-spin"></i>&nbsp; PDF तयार होत आहे... थांबा
+            </div>
+          </div>
+          <div id="bulkError" style="display:none;margin-top:10px;padding:8px 12px;background:#fee2e2;border-radius:6px;font-size:12px;color:#b91c1c;font-family:'Noto Sans Devanagari',sans-serif;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- View Toggle -->
+    <div style="display:flex;gap:8px;margin-bottom:20px;align-items:center;">
+      <button id="gridBtn" onclick="setView('grid')" class="topbar-btn btn-gold"><i class="fas fa-th"></i> कार्ड</button>
+      <button id="listBtn" onclick="setView('list')" class="topbar-btn btn-outline"><i class="fas fa-list"></i> यादी</button>
+      <span style="margin-left:auto;font-size:13px;color:#64748b;font-family:'DM Sans',sans-serif;"><%= students.length %> विद्यार्थी</span>
+    </div>
+
+    <!-- GRID VIEW — Marathi Cards -->
+    <div id="gridView">
+      <% if(!students.length) { %>
+        <div style="text-align:center;padding:80px;color:#94a3b8;">
+          <i class="fas fa-users" style="font-size:50px;display:block;margin-bottom:16px;"></i>
+          <div style="font-size:18px;margin-bottom:8px;font-family:'Noto Sans Devanagari',sans-serif;">कोणताही विद्यार्थी सापडला नाही</div>
+          <a href="/teacher/students/add" class="topbar-btn btn-gold" style="display:inline-flex;margin-top:12px;">पहिला विद्यार्थी जोडा</a>
+        </div>
+      <% } else { %>
+      <div class="students-grid">
+        <% students.forEach(s => { %>
+        <div class="student-card" onclick="location.href='/teacher/students/<%= s._id %>'">
+          <% if(s.bonafideGenerated || s.utaraGenerated) { %>
+          <span class="tc-badge" style="background:linear-gradient(135deg,#2e7d32,#388e3c);">
+            <% if(s.bonafideGenerated) { %>📜<% } %>
+            <% if(s.utaraGenerated) { %>📋<% } %>
+          </span>
+          <% } %>
+          <div class="student-card-top">
+            <div class="student-photo">
+              <% if(s.photo) { %><img src="<%= s.photo %>" alt="<%= s.name %>"/><% } else { %><%= s.name.charAt(0) %><% } %>
+            </div>
+            <div class="student-name" style="font-family:'Noto Sans Devanagari',sans-serif;"><%= s.name %></div>
+            <div class="student-roll" style="font-family:'Noto Sans Devanagari',sans-serif;">
+              <% if(s.rollNo) { %>क्र. <%= s.rollNo %><% } else { %>—<% } %>
+            </div>
+          </div>
+          <div class="student-card-bottom">
+            <div class="student-enroll" style="font-size:11px;color:#94a3b8;"><%= s.enrollmentId %></div>
+            <div style="display:flex;justify-content:space-between;margin-top:6px;">
+              <span class="badge badge-info" style="font-family:'Noto Sans Devanagari',sans-serif;font-size:12px;">वर्ग <%= s.currentClass %></span>
+              <% if(s.fatherName) { %>
+              <span style="font-size:11px;color:#64748b;font-family:'Noto Sans Devanagari',sans-serif;"><%= s.fatherName.split(' ')[0] %></span>
+              <% } %>
+            </div>
+            <!-- Quick action buttons on card -->
+            <div style="display:flex;gap:6px;margin-top:10px;" onclick="event.stopPropagation()">
+              <a href="/teacher/students/<%= s._id %>/bonafide" target="_blank" class="topbar-btn" style="flex:1;justify-content:center;background:#e8eaf6;color:#1a237e;border:none;padding:5px 8px;font-size:11px;border-radius:6px;font-family:'Noto Sans Devanagari',sans-serif;" title="बोनाफाईड">📜 बोनाफाईड</a>
+              <a href="/teacher/students/<%= s._id %>/utara" target="_blank" class="topbar-btn" style="flex:1;justify-content:center;background:#fffbeb;color:#92400e;border:none;padding:5px 8px;font-size:11px;border-radius:6px;font-family:'Noto Sans Devanagari',sans-serif;" title="उतारा">📋 उतारा</a>
+            </div>
+          </div>
+        </div>
+        <% }) %>
+      </div>
+      <% } %>
+    </div>
+
+    <!-- LIST VIEW -->
+    <div id="listView" style="display:none;">
+      <div class="card">
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr>
+              <th>क्र.</th>
+              <th>विद्यार्थ्याचे नाव</th>
+              <th>वर्ग</th>
+              <th>वडिलांचे नाव</th>
+              <th>आधार नं.</th>
+              <th>प्रमाणपत्रे</th>
+              <th>कृती</th>
+            </tr></thead>
+            <tbody>
+            <% students.forEach((s,i) => { %>
+            <tr>
+              <td style="color:#94a3b8;font-size:12px;"><%=i+1%></td>
+              <td>
+                <div style="font-weight:600;color:#0f1f3d;font-family:'Noto Sans Devanagari',sans-serif;"><%=s.name%></div>
+                <div style="font-size:11px;color:#94a3b8;"><%=s.enrollmentId%></div>
+              </td>
+              <td><span class="badge badge-info" style="font-family:'Noto Sans Devanagari',sans-serif;"><%=s.currentClass%></span></td>
+              <td style="font-family:'Noto Sans Devanagari',sans-serif;font-size:13px;"><%=s.fatherName||'—'%></td>
+              <td style="font-size:12px;color:#64748b;"><%=s.aadharNo||'—'%></td>
+              <td>
+                <% if(s.bonafideGenerated) { %><span class="badge" style="background:#e8f5e9;color:#2e7d32;">📜</span> <% } %>
+                <% if(s.utaraGenerated) { %><span class="badge" style="background:#fffbeb;color:#92400e;">📋</span><% } %>
+              </td>
+              <td>
+                <div style="display:flex;gap:4px;">
+                  <a href="/teacher/students/<%=s._id%>" class="topbar-btn btn-outline" style="padding:5px 10px;font-size:12px;">पाहा</a>
+                  <a href="/teacher/students/<%=s._id%>/bonafide" target="_blank" class="topbar-btn" style="padding:5px 10px;font-size:12px;background:#e8eaf6;color:#1a237e;border:none;">📜</a>
+                  <a href="/teacher/students/<%=s._id%>/utara" target="_blank" class="topbar-btn" style="padding:5px 10px;font-size:12px;background:#fffbeb;color:#92400e;border:none;">📋</a>
+                </div>
+              </td>
+            </tr>
+            <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+</div>
+<script>
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+function setView(v) {
+  document.getElementById('gridView').style.display = v === 'grid' ? '' : 'none';
+  document.getElementById('listView').style.display = v === 'list' ? '' : 'none';
+  document.getElementById('gridBtn').className = 'topbar-btn ' + (v==='grid'?'btn-gold':'btn-outline');
+  document.getElementById('listBtn').className = 'topbar-btn ' + (v==='list'?'btn-gold':'btn-outline');
+  localStorage.setItem('studentView', v);
+}
+const sv = localStorage.getItem('studentView') || 'grid';
+setView(sv);
+
+// Bulk PDF panel
+function toggleBulkPanel() {
+  const p = document.getElementById('bulkPdfPanel');
+  const c = document.getElementById('bulkChevron');
+  const open = p.style.display === '';
+  p.style.display = open ? 'none' : '';
+  c.style.transform = open ? '' : 'rotate(180deg)';
+}
+
+function getBulkParams(type) {
+  const cls = document.getElementById('bulkClass').value;
+  const sec = document.getElementById('bulkSection').value.trim();
+  const params = new URLSearchParams({ type });
+  if (cls) params.set('classFilter', cls);
+  if (sec) params.set('section', sec);
+  return params;
+}
+
+async function downloadBulkDocx(type) {
+  const loading = document.getElementById('bulkLoading');
+  const errDiv  = document.getElementById('bulkError');
+  errDiv.style.display = 'none';
+  loading.style.display = '';
+  try {
+    const params = getBulkParams(type);
+    const resp   = await fetch('/teacher/bulk-pdf?' + params.toString());
+    if (!resp.ok) throw new Error(await resp.text());
+    const blob   = await resp.blob();
+    const url    = URL.createObjectURL(blob);
+    const a      = document.createElement('a');
+    const cls    = document.getElementById('bulkClass').value;
+    const label  = type === 'bonafide' ? 'Bonafide' : 'Utara';
+    a.href     = url;
+    a.download = `${label}${cls ? '_Class'+cls : ''}.docx`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch(e) {
+    errDiv.textContent = 'त्रुटी: ' + e.message;
+    errDiv.style.display = '';
+  } finally {
+    loading.style.display = 'none';
+  }
+}
+
+function openBulkHtml(type) {
+  const params = getBulkParams(type);
+  window.open('/teacher/bulk-html?' + params.toString(), '_blank');
+}
+</script>
+</body></html>

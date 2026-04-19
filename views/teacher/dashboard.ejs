@@ -1,0 +1,121 @@
+<%- include('../partials/teacher-layout-head') %>
+<% activePage = 'dashboard'; %>
+<div class="app-shell">
+<%- include('../partials/teacher-sidebar') %>
+<main class="main-content">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <div class="page-title">डॅशबोर्ड</div>
+    </div>
+    <div class="topbar-right">
+      <span style="font-size:13px;color:#64748b;font-family:'DM Sans',sans-serif;">
+        नमस्कार, <strong><%= teacher.name %></strong> 🙏
+      </span>
+    </div>
+  </div>
+  <div class="page-content">
+    <!-- Stats -->
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:linear-gradient(135deg,#1a237e,#283593);"><i class="fas fa-users"></i></div>
+        <div class="stat-info">
+          <div class="stat-number"><%= stats.totalStudents %></div>
+          <div class="stat-label" style="font-family:'Noto Sans Devanagari',sans-serif;">एकूण विद्यार्थी</div>
+        </div>
+      </div>
+      <a href="/teacher/students?classFilter=<%= myClassQuery.class %><%= myClassQuery.section ? '&sectionFilter='+myClassQuery.section : '' %>" style="text-decoration:none;">
+      <div class="stat-card" style="cursor:pointer;transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(27,94,32,.18)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div class="stat-icon" style="background:linear-gradient(135deg,#1b5e20,#2e7d32);"><i class="fas fa-chalkboard-teacher"></i></div>
+        <div class="stat-info">
+          <div class="stat-number"><%= stats.classStudents %></div>
+          <div class="stat-label" style="font-family:'Noto Sans Devanagari',sans-serif;">
+            माझ्या वर्गातील विद्यार्थी
+            <% if(myClassQuery.class) { %>
+            <span style="display:block;font-size:10px;color:#2e7d32;font-weight:700;margin-top:2px;">
+              वर्ग <%= myClassQuery.class %><% if(myClassQuery.section){ %> - <%= myClassQuery.section %> तुकडी<% } %>
+              &nbsp;↗
+            </span>
+            <% } %>
+          </div>
+        </div>
+      </div>
+      </a>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:linear-gradient(135deg,#4a148c,#6a1b9a);"><i class="fas fa-certificate"></i></div>
+        <div class="stat-info">
+          <div class="stat-number"><%= stats.bonafideCount %></div>
+          <div class="stat-label" style="font-family:'Noto Sans Devanagari',sans-serif;">बोनाफाईड जारी</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:linear-gradient(135deg,#b45309,#d97706);"><i class="fas fa-file-alt"></i></div>
+        <div class="stat-info">
+          <div class="stat-number"><%= stats.utaraCount %></div>
+          <div class="stat-label" style="font-family:'Noto Sans Devanagari',sans-serif;">उतारे जारी</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-header"><div class="card-title">जलद कृती / Quick Actions</div></div>
+      <div class="card-body" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+        <a href="/teacher/students/add" style="display:flex;align-items:center;gap:14px;padding:16px;background:#e8eaf6;border-radius:10px;text-decoration:none;transition:all .2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          <div style="width:44px;height:44px;border-radius:10px;background:#1a237e;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;">👤</div>
+          <div><div style="font-weight:700;color:#1a237e;font-family:'Noto Sans Devanagari',sans-serif;">नवीन विद्यार्थी</div><div style="font-size:12px;color:#64748b;">Add Student</div></div>
+        </a>
+        <a href="/teacher/upload-excel" style="display:flex;align-items:center;gap:14px;padding:16px;background:#e8f5e9;border-radius:10px;text-decoration:none;transition:all .2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          <div style="width:44px;height:44px;border-radius:10px;background:#2e7d32;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;">📊</div>
+          <div><div style="font-weight:700;color:#2e7d32;font-family:'Noto Sans Devanagari',sans-serif;">Excel आयात</div><div style="font-size:12px;color:#64748b;">Import Students</div></div>
+        </a>
+        <a href="/teacher/students" style="display:flex;align-items:center;gap:14px;padding:16px;background:#fff8e1;border-radius:10px;text-decoration:none;transition:all .2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          <div style="width:44px;height:44px;border-radius:10px;background:#f59e0b;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;">📋</div>
+          <div><div style="font-weight:700;color:#92400e;font-family:'Noto Sans Devanagari',sans-serif;">विद्यार्थी यादी</div><div style="font-size:12px;color:#64748b;">All Students</div></div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Recent Students -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">नुकतेच जोडलेले विद्यार्थी</div></div>
+      <% if(recentStudents.length === 0) { %>
+        <div class="card-body" style="text-align:center;color:#94a3b8;padding:40px;font-family:'Noto Sans Devanagari',sans-serif;">कोणताही विद्यार्थी नाही</div>
+      <% } else { %>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr>
+            <th style="font-family:'Noto Sans Devanagari',sans-serif;">विद्यार्थ्याचे नाव</th>
+            <th style="font-family:'Noto Sans Devanagari',sans-serif;">वर्ग</th>
+            <th style="font-family:'Noto Sans Devanagari',sans-serif;">वडिलांचे नाव</th>
+            <th style="font-family:'Noto Sans Devanagari',sans-serif;">प्रमाणपत्रे</th>
+            <th>कृती</th>
+          </tr></thead>
+          <tbody>
+          <% recentStudents.forEach(s => { %>
+          <tr>
+            <td>
+              <div style="font-weight:600;font-family:'Noto Sans Devanagari',sans-serif;"><%=s.name%></div>
+              <div style="font-size:11px;color:#94a3b8;"><%=s.enrollmentId%></div>
+            </td>
+            <td><span class="badge badge-info" style="font-family:'Noto Sans Devanagari',sans-serif;"><%=s.currentClass%></span></td>
+            <td style="font-family:'Noto Sans Devanagari',sans-serif;font-size:13px;"><%=s.fatherName||'—'%></td>
+            <td>
+              <div style="display:flex;gap:4px;">
+                <a href="/teacher/students/<%=s._id%>/bonafide" class="topbar-btn" style="padding:4px 10px;font-size:11px;background:#e8eaf6;color:#1a237e;border:none;" title="बोनाफाईड">📜</a>
+                <a href="/teacher/students/<%=s._id%>/utara" class="topbar-btn" style="padding:4px 10px;font-size:11px;background:#fffbeb;color:#92400e;border:none;" title="उतारा">📋</a>
+              </div>
+            </td>
+            <td><a href="/teacher/students/<%=s._id%>" class="topbar-btn btn-outline" style="padding:5px 12px;font-size:12px;">पाहा</a></td>
+          </tr>
+          <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% } %>
+    </div>
+  </div>
+</main>
+</div>
+<script>function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }</script>
+</body></html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>404 - Page Not Found</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'DM Sans',sans-serif;background:#0f1f3d;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;}
+  .error-code{font-family:'Playfair Display',serif;font-size:120px;color:#c9a84c;line-height:1;opacity:.3;}
+  .error-title{font-size:28px;color:#fff;margin:16px 0 8px;}
+  .error-sub{color:rgba(255,255,255,.5);font-size:15px;margin-bottom:30px;}
+  .back-btn{display:inline-block;padding:12px 28px;background:linear-gradient(135deg,#c9a84c,#e6c668);color:#0f1f3d;border-radius:10px;font-weight:700;text-decoration:none;transition:.2s;}
+  .back-btn:hover{transform:translateY(-2px);}
+</style>
+</head>
+<body>
+<div>
+  <div class="error-code">404</div>
+  <div class="error-title">Page Not Found</div>
+  <div class="error-sub">The page you are looking for doesn't exist.</div>
+  <a href="/auth/login" class="back-btn">Back to Login</a>
+</div>
+</body>
+</html>

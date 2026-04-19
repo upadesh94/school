@@ -1,0 +1,79 @@
+<%- include('../partials/admin-layout-head') %>
+<% activePage = 'students'; %>
+<div class="app-shell">
+<%- include('../partials/admin-sidebar') %>
+<main class="main-content">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu"><i class="fas fa-bars"></i></button>
+      <div>
+        <div class="page-title" style="font-family:'Noto Sans Devanagari',sans-serif;"><%= student.name %></div>
+        <div class="breadcrumb">विद्यार्थी तपशील / Student Detail</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <a href="/admin/students" class="topbar-btn btn-outline"><i class="fas fa-arrow-left"></i> परत / Back</a>
+    </div>
+  </div>
+  <div class="page-content">
+    <div style="display:grid;grid-template-columns:280px 1fr;gap:24px;">
+      <!-- Left Profile Card -->
+      <div>
+        <div class="card" style="text-align:center;">
+          <div style="background:linear-gradient(135deg,#0f1f3d,#1d3461);padding:30px 20px;border-radius:18px 18px 0 0;">
+            <div style="width:90px;height:90px;border-radius:50%;border:3px solid #c9a84c;margin:0 auto 12px;overflow:hidden;background:#162848;display:flex;align-items:center;justify-content:center;font-size:36px;color:#c9a84c;">
+              <% if(student.photo) { %><img src="<%= student.photo %>" style="width:100%;height:100%;object-fit:cover;"/><% } else { %><%= student.name.charAt(0) %><% } %>
+            </div>
+            <div style="color:#fff;font-size:18px;font-weight:700;font-family:'Noto Sans Devanagari',sans-serif;"><%= student.name %></div>
+            <div style="color:#c9a84c;font-size:12px;letter-spacing:1px;margin-top:4px;"><%= student.enrollmentId %></div>
+
+          </div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;">
+              <div style="display:flex;justify-content:space-between;"><span style="color:#64748b;">क्र. / Roll No</span><strong><%= student.rollNo || '—' %></strong></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:#64748b;">वर्ग / Class</span><strong>वर्ग <%= student.currentClass %> <%= student.currentSection || '' %></strong></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:#64748b;">लिंग / Gender</span><strong><%= student.gender || '—' %></strong></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:#64748b;">राष्ट्रीयत्व</span><strong><%= student.nationality %></strong></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:#64748b;">वर्ग / Category</span><strong><%= student.category %></strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Details -->
+      <div style="display:flex;flex-direction:column;gap:20px;">
+        <div class="card">
+          <div class="card-header"><div class="card-title"><i class="fas fa-info-circle"></i> वैयक्तिक माहिती / Personal Details</div></div>
+          <div class="card-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:14px;">
+              <div><div style="color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">वडिलांचे नाव / Father's Name</div><strong><%= student.fatherName || '—' %></strong></div>
+              <div><div style="color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">आईचे नाव / Mother's Name</div><strong><%= student.motherName || '—' %></strong></div>
+              <div><div style="color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">जन्म दिनांक / Date of Birth</div><strong><%= student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString('mr-IN') : '—' %></strong></div>
+              <div><div style="color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">आधार नंबर / Aadhar No</div><strong><%= student.aadharNo || '—' %></strong></div>
+              <div><div style="color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">पालक संपर्क / Parent Contact</div><strong><%= student.parentContact || '—' %></strong></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title"><i class="fas fa-graduation-cap"></i> शैक्षणिक माहिती / Academic Details</div></div>
+          <div class="card-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:14px;">
+              <div><div style="color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">प्रवेश दिनांक / Admission Date</div><strong><%= student.admissionDate ? new Date(student.admissionDate).toLocaleDateString('mr-IN') : '—' %></strong></div>
+              <div><div style="color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">शाळा सोडण्याची तारीख / Leaving Date</div><strong><%= student.leavingDate ? new Date(student.leavingDate).toLocaleDateString('mr-IN') : '—' %></strong></div>
+              <div><div style="color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">शेवटची परीक्षा / Last Exam</div><strong><%= student.lastExamAppeared || '—' %></strong></div>
+              <div><div style="color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">निकाल / Result</div><strong><%= student.lastExamResult || '—' %></strong></div>
+              <div><div style="color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">वर्तणूक / Conduct</div><strong><%= student.generalConduct %></strong></div>
+              <div><div style="color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">पदोन्नती / Promotion</div><strong><%= student.qualifiedForPromotion %></strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+<script>
+function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebarOverlay').classList.toggle('show'); }
+function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('show'); }
+</script>
+</body></html>

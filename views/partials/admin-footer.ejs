@@ -1,0 +1,47 @@
+    </div><!-- end .page-content -->
+  </div><!-- end .main-content -->
+</div><!-- end .erp-wrapper -->
+
+<style>
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 99;
+}
+@media (max-width: 900px) {
+  .sidebar-overlay.show { display: block; }
+}
+</style>
+
+<script>
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('show');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('show');
+}
+
+// Auto-close alerts
+setTimeout(() => {
+  document.querySelectorAll('.alert').forEach(el => {
+    el.style.transition = 'opacity 0.4s ease';
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 400);
+  });
+}, 5000);
+
+// Alert close buttons
+document.querySelectorAll('.alert-close').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const alert = btn.parentElement;
+    alert.style.opacity = '0';
+    setTimeout(() => alert.remove(), 300);
+  });
+});
+</script>
+</body>
+</html>
