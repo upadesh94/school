@@ -1,26 +1,43 @@
 const nodemailer = require('nodemailer');
 
 // ── Gmail SMTP with App Password ────────────────────────────────
+const smtpUser = String(process.env.EMAIL_USER || '').trim();
+const smtpPass = String(process.env.EMAIL_PASS || '').trim();
+const mailerEnabled = Boolean(smtpUser && smtpPass);
+
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
   secure: false,
-  auth: {
-    user: "kunalkandke@gmail.com",
-    pass: "xtpbiuvrhjtrwcvo"
-  }
+  ...(mailerEnabled
+    ? {
+        auth: {
+          user: smtpUser,
+          pass: smtpPass,
+        },
+      }
+    : {}),
 });
 
 // Verify on startup
-transporter.verify((err, success) => {
-  if (err) console.error('❌ Mailer config error:', err.message);
-  else console.log('✅ Mailer ready — Gmail SMTP connected');
-});
+if (!mailerEnabled) {
+  console.warn('⚠️ Mailer disabled: set EMAIL_USER and EMAIL_PASS to enable email delivery.');
+} else if (!process.env.VERCEL) {
+  transporter.verify((err, success) => {
+    if (err) console.error('❌ Mailer config error:', err.message);
+    else console.log('✅ Mailer ready — Gmail SMTP connected');
+  });
+}
 
 const sendEmail = async ({ to, subject, html }) => {
+  if (!mailerEnabled) {
+    console.warn('⚠️ Email not sent because SMTP credentials are missing.');
+    return false;
+  }
+
   try {
     const info = await transporter.sendMail({
-      from: '"तुलजाभवानी माध्यमिक विद्यालय ERP" <kunalkandke@gmail.com>',
+      from: `"तुलजाभवानी माध्यमिक विद्यालय ERP" <${smtpUser}>`,
       to,
       subject,
       html,

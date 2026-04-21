@@ -1,6 +1,6 @@
 {
   "name": "tuljabhavani-school-erp",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "School ERP - Tuljabhavani Madhyamik Vidyalay | Marathi + English",
   "main": "app.js",
   "scripts": {

@@ -4,11 +4,19 @@ const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 
 // ── Ensure upload directories exist (absolute paths) ────────────
-const photoDir = path.join(__dirname, '../public/uploads/photos');
-const excelDir = path.join(__dirname, '../public/uploads');
+const isServerlessRuntime = Boolean(process.env.VERCEL);
+const uploadRoot = isServerlessRuntime
+  ? path.join('/tmp', 'uploads')
+  : path.join(__dirname, '../public/uploads');
+const photoDir = path.join(uploadRoot, 'photos');
+const excelDir = uploadRoot;
 
-if (!fs.existsSync(photoDir)) fs.mkdirSync(photoDir, { recursive: true });
-if (!fs.existsSync(excelDir)) fs.mkdirSync(excelDir, { recursive: true });
+try {
+  if (!fs.existsSync(photoDir)) fs.mkdirSync(photoDir, { recursive: true });
+  if (!fs.existsSync(excelDir)) fs.mkdirSync(excelDir, { recursive: true });
+} catch (err) {
+  console.warn(`⚠️ Upload storage initialization warning: ${err.message}`);
+}
 
 // Photo storage
 const photoStorage = multer.diskStorage({

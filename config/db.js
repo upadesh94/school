@@ -374,13 +374,14 @@ class FirestoreModel {
   }
 }
 
-const connectDB = async () => {
+const connectDB = () => {
   try {
     initFirebase();
     console.log('✅ Firestore Connected');
+    return true;
   } catch (error) {
     console.error(`❌ Firestore Connection Error: ${error.message}`);
-    process.exit(1);
+    return false;
   }
 };
 

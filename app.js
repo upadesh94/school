@@ -13,19 +13,27 @@ const {
 } = require('./utils/firebaseAuthService');
 
 const app = express();
+const isServerlessRuntime = Boolean(process.env.VERCEL);
+const runtimeUploadRoot = isServerlessRuntime
+  ? path.join('/tmp', 'uploads')
+  : path.join(__dirname, 'public/uploads');
 
 // ── Connect DB ─────────────────────────────────────────────────
 connectDB();
 
 // ── Ensure upload directories exist ────────────────────────────
 const uploadDirs = [
-  path.join(__dirname, 'public/uploads'),
-  path.join(__dirname, 'public/uploads/photos')
+  runtimeUploadRoot,
+  path.join(runtimeUploadRoot, 'photos')
 ];
 uploadDirs.forEach(dir => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-    console.log('📁 Created:', dir);
+  try {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+      console.log('📁 Created:', dir);
+    }
+  } catch (err) {
+    console.warn(`⚠️ Upload directory unavailable (${dir}): ${err.message}`);
   }
 });
 
@@ -69,7 +77,9 @@ const seedAdmin = async () => {
     console.error('⚠️ Admin seed error:', err.message);
   }
 };
-setTimeout(seedAdmin, 1500);
+if (!isServerlessRuntime && process.env.ENABLE_STARTUP_SEED !== 'false') {
+  setTimeout(seedAdmin, 1500);
+}
 
 // ── View Engine ────────────────────────────────────────────────
 app.set('view engine', 'ejs');
@@ -92,7 +102,7 @@ app.use((req, res, next) => {
 
 // ── Static Files ───────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+app.use('/uploads', express.static(runtimeUploadRoot));
 
 // ── Session (minimal — NOT used for auth tokens) ───────────────
 app.use(session({
@@ -146,12 +156,15 @@ app.use((err, req, res, next) => {
   `);
 });
 
-// ── Start Server ───────────────────────────────────────────────
-const PORT = process.env.PORT || 3000;
-const demoPrincipal = getDemoPrincipalCredentials();
-app.listen(PORT, () => {
-  console.log(`\n🚀 तुलजाभवानी ERP → http://localhost:${PORT}`);
-  console.log(`   Principal demo login: ${demoPrincipal.email} / ${demoPrincipal.password}\n`);
-});
-
 module.exports = app;
+
+// ── Start Server (local only) ──────────────────────────────────
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  const demoPrincipal = getDemoPrincipalCredentials();
+
+  app.listen(PORT, () => {
+    console.log(`\n🚀 तुलजाभवानी ERP → http://localhost:${PORT}`);
+    console.log(`   Principal demo login: ${demoPrincipal.email} / ${demoPrincipal.password}\n`);
+  });
+}
