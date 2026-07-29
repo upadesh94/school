@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+<meta charset="UTF-8">
+<title>Transfer Certificate - <%= student.name %></title>
+<style>
+  body { font-family: Arial, sans-serif; padding: 20px; margin: 0; background: #fff; color: #000; }
+  .tc-container { border: 4px double #1a237e; padding: 30px; position: relative; max-width: 800px; margin: 0 auto; }
+  .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #c9a84c; padding-bottom: 10px; }
+  .school-name { font-size: 28px; font-weight: bold; color: #1a237e; margin-bottom: 5px; }
+  .school-sub { font-size: 16px; color: #555; }
+  .tc-title { text-align: center; font-size: 22px; font-weight: bold; text-decoration: underline; margin: 20px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 16px; margin-bottom: 40px; }
+  td { padding: 12px 10px; vertical-align: top; }
+  td:first-child { width: 45%; font-weight: bold; }
+  td:last-child { border-bottom: 1px dotted #000; }
+  .footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 60px; }
+  .signature { border-top: 1px solid #000; padding-top: 10px; text-align: center; width: 200px; }
+  @media print {
+    body { padding: 0; }
+    .tc-container { border: none; padding: 0; }
+    .print-btn { display: none; }
+  }
+  .print-btn { position: fixed; top: 20px; right: 20px; padding: 10px 20px; background: #1a237e; color: #fff; border: none; cursor: pointer; border-radius: 5px; font-size: 16px; }
+</style>
+</head>
+<body>
+
+<button class="print-btn" onclick="window.print()">🖨️ Print TC</button>
+
+<div class="tc-container">
+  <div class="header">
+    <div class="school-name">तुलजाभवानी माध्यमिक विद्यालय</div>
+    <div class="school-sub">वासुसायगाव, ता. गंगापूर, जि. छत्रपती संभाजीनगर</div>
+  </div>
+  
+  <div class="tc-title">LEAVING / TRANSFER CERTIFICATE</div>
+  
+  <table>
+    <tr>
+      <td>1. Name of the Pupil</td>
+      <td><%= student.name %></td>
+    </tr>
+    <tr>
+      <td>2. Father's / Guardian's Name</td>
+      <td><%= student.fatherName || '________________' %></td>
+    </tr>
+    <tr>
+      <td>3. Mother's Name</td>
+      <td><%= student.motherName || '________________' %></td>
+    </tr>
+    <tr>
+      <td>4. Nationality</td>
+      <td><%= student.nationality || 'Indian' %></td>
+    </tr>
+    <tr>
+      <td>5. Religion & Caste</td>
+      <td><%= student.religion || '_____' %> / <%= student.category || '_____' %></td>
+    </tr>
+    <tr>
+      <td>6. Date of Birth (in figures and words)</td>
+      <td><%= student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString('en-IN') : '________________' %></td>
+    </tr>
+    <tr>
+      <td>7. Date of Admission</td>
+      <td><%= student.admissionDate ? new Date(student.admissionDate).toLocaleDateString('en-IN') : '________________' %></td>
+    </tr>
+    <tr>
+      <td>8. Class in which pupil last studied</td>
+      <td>Class <%= student.currentClass %></td>
+    </tr>
+    <tr>
+      <td>9. General Conduct</td>
+      <td><%= student.generalConduct || 'Good' %></td>
+    </tr>
+    <tr>
+      <td>10. Reason for leaving school</td>
+      <td>Parents' Request / Higher Education</td>
+    </tr>
+  </table>
+  
+  <div class="footer">
+    <div>
+      Date of Issue: <strong><%= new Date().toLocaleDateString('en-IN') %></strong>
+    </div>
+    <div class="signature">
+      <strong>Principal Signature with Seal</strong>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

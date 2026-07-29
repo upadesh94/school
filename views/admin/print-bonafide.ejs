@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+<meta charset="UTF-8">
+<title>Bonafide Certificate - <%= student.name %></title>
+<style>
+  body { font-family: Arial, sans-serif; padding: 40px; margin: 0; background: #fff; color: #000; }
+  .cert-container { border: 8px solid #1a237e; padding: 40px; border-radius: 12px; position: relative; max-width: 800px; margin: 0 auto; }
+  .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #c9a84c; padding-bottom: 20px; }
+  .school-name { font-size: 32px; font-weight: bold; color: #1a237e; margin-bottom: 10px; }
+  .school-sub { font-size: 18px; color: #555; }
+  .cert-title { text-align: center; font-size: 24px; font-weight: bold; text-decoration: underline; margin: 30px 0; letter-spacing: 2px; }
+  .content { font-size: 18px; line-height: 2.2; text-align: justify; }
+  .highlight { font-weight: bold; border-bottom: 1px dashed #000; padding: 0 10px; }
+  .footer { margin-top: 80px; display: flex; justify-content: space-between; align-items: flex-end; }
+  .signature { border-top: 1px solid #000; padding-top: 10px; text-align: center; width: 200px; }
+  @media print {
+    body { padding: 0; }
+    .cert-container { border: none; padding: 0; }
+    .print-btn { display: none; }
+  }
+  .print-btn { position: fixed; top: 20px; right: 20px; padding: 10px 20px; background: #1a237e; color: #fff; border: none; cursor: pointer; border-radius: 5px; font-size: 16px; }
+</style>
+</head>
+<body>
+
+<button class="print-btn" onclick="window.print()">🖨️ Print Certificate</button>
+
+<div class="cert-container">
+  <div class="header">
+    <div class="school-name">तुलजाभवानी माध्यमिक विद्यालय</div>
+    <div class="school-sub">वासुसायगाव, ता. गंगापूर, जि. छत्रपती संभाजीनगर</div>
+  </div>
+  
+  <div class="cert-title">BONAFIDE CERTIFICATE</div>
+  
+  <div class="content">
+    This is to certify that Master/Miss <span class="highlight"><%= student.name %></span> 
+    is a bonafide student of this school studying in Class <span class="highlight"><%= student.currentClass %></span> 
+    for the academic year 2023-24. <br><br>
+    
+    His/Her Date of Birth as per school records is <span class="highlight"><%= student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString('en-IN') : '_______________' %></span>.<br><br>
+    
+    To the best of my knowledge, he/she bears a good moral character.
+  </div>
+  
+  <div class="footer">
+    <div>
+      Date: <strong><%= new Date().toLocaleDateString('en-IN') %></strong><br>
+      Place: <strong>Gangapur</strong>
+    </div>
+    <div class="signature">
+      <strong>Principal / Headmaster</strong><br>
+      Tuljabhavani Madhyamik Vidyalay
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

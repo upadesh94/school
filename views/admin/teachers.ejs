@@ -7,7 +7,7 @@
     <div class="topbar-left">
       <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu"><i class="fas fa-bars"></i></button>
       <div>
-        <div class="page-title">शिक्षक <span style="font-family:'DM Sans',sans-serif;font-size:14px;color:#94a3b8;font-weight:400;">Teachers</span></div>
+        <div class="page-title">शिक्षक <span class="english-caption-inline">Teachers</span></div>
       </div>
     </div>
     <div class="topbar-right">
@@ -18,21 +18,24 @@
     <% if(success) { %><div class="alert-box alert-success"><i class="fas fa-check-circle"></i> <%= success %></div><% } %>
     <div class="card">
       <div class="card-header">
-        <div class="card-title"><i class="fas fa-chalkboard-teacher"></i> सर्व शिक्षक / All Teachers (<%= teachers.length %>)</div>
+        <div class="card-title">
+          <i class="fas fa-chalkboard-teacher"></i> 
+          <span class="marathi-primary">सर्व शिक्षक <span class="english-caption-inline">All Teachers (<%= teachers.length %>)</span></span>
+        </div>
       </div>
       <div class="table-container">
         <% if(teachers.length === 0) { %>
           <div class="table-empty"><i class="fas fa-user-slash" style="font-size:40px;display:block;margin-bottom:12px;color:#94a3b8;"></i>अद्याप कोणताही शिक्षक जोडलेला नाही<br><small>No teachers added yet</small></div>
         <% } else { %>
-        <table>
+        <table class="mobile-cards">
           <thead><tr>
             <th>ID</th><th>नाव / Name</th><th>ईमेल / Email</th><th>वर्ग / Class</th><th>विषय / Subject</th><th>स्थिती / Status</th><th>क्रिया / Actions</th>
           </tr></thead>
           <tbody>
             <% teachers.forEach(t => { %>
             <tr>
-              <td><span class="badge badge-navy"><%= t.employeeId %></span></td>
-              <td>
+              <td data-label="ID"><span class="badge badge-navy"><%= t.employeeId %></span></td>
+              <td data-label="नाव / Name">
                 <div style="display:flex;align-items:center;gap:10px;">
                   <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#0f1f3d,#1d3461);display:flex;align-items:center;justify-content:center;color:#c9a84c;font-size:14px;font-weight:700;flex-shrink:0;overflow:hidden;">
                     <% if(t.profilePhoto) { %><img src="<%= t.profilePhoto %>" style="width:100%;height:100%;object-fit:cover;"/><% } else { %><%= t.name.charAt(0) %><% } %>
@@ -43,19 +46,30 @@
                   </div>
                 </div>
               </td>
-              <td style="font-size:13px;"><%= t.email %></td>
-              <td>
+              <td data-label="ईमेल / Email" style="font-size:13px;"><%= t.email %></td>
+              <td data-label="वर्ग / Class">
                 <% if(t.classAssigned) { %>
                   <span class="badge badge-gold">वर्ग <%= t.classAssigned %><% if(t.section){ %> - <%= t.section %><% } %></span>
                 <% } else { %><span style="color:#94a3b8;">—</span><% } %>
               </td>
-              <td><%= t.subject || '—' %></td>
-              <td><span class="badge <%= t.isActive ? 'badge-success' : 'badge-danger' %>"><%= t.isActive ? 'सक्रिय' : 'निष्क्रिय' %></span></td>
-              <td>
-                <div style="display:flex;gap:6px;">
-                  <a href="/admin/teachers/edit/<%= t._id %>" class="topbar-btn btn-outline" style="padding:5px 10px;font-size:12px;" title="संपादन / Edit"><i class="fas fa-edit"></i></a>
-                  <button onclick="resetPassword('<%= t._id %>','<%= t.name %>')" class="topbar-btn btn-outline" style="padding:5px 10px;font-size:12px;" title="पासवर्ड रीसेट / Reset Password"><i class="fas fa-key"></i></button>
-                  <button onclick="deleteTeacher('<%= t._id %>','<%= t.name %>')" class="topbar-btn btn-danger" style="padding:5px 10px;font-size:12px;" title="हटवा / Delete"><i class="fas fa-trash"></i></button>
+              <td data-label="विषय / Subject"><%= t.subject || '—' %></td>
+              <td data-label="स्थिती / Status">
+                <% if (t.isApproved === false) { %>
+                  <span class="badge badge-warning">प्रलंबित / Pending</span>
+                <% } else { %>
+                  <span class="badge <%= t.isActive ? 'badge-success' : 'badge-danger' %>"><%= t.isActive ? 'सक्रिय' : 'निष्क्रिय' %></span>
+                <% } %>
+              </td>
+              <td data-label="क्रिया / Actions">
+                <div style="display:flex;gap:6px;align-items:center;">
+                  <% if (t.isApproved === false) { %>
+                    <form action="/admin/teachers/approve/<%= t._id %>" method="POST" style="margin:0;">
+                      <button type="submit" class="topbar-btn btn-gold" style="padding:8px 12px;font-size:12px;background:var(--success-600);color:#fff;border-color:var(--success-600);" title="मंजुरी द्या / Approve"><i class="fas fa-check"></i> Approve</button>
+                    </form>
+                  <% } %>
+                  <a href="/admin/teachers/edit/<%= t._id %>" class="topbar-btn btn-outline" style="padding:8px 12px;font-size:12px;" title="संपादन / Edit"><i class="fas fa-edit"></i></a>
+                  <button onclick="resetPassword('<%= t._id %>','<%= t.name %>')" class="topbar-btn btn-outline" style="padding:8px 12px;font-size:12px;" title="पासवर्ड रीसेट / Reset Password"><i class="fas fa-key"></i></button>
+                  <button onclick="deleteTeacher('<%= t._id %>','<%= t.name %>')" class="topbar-btn btn-danger" style="padding:8px 12px;font-size:12px;" title="हटवा / Delete"><i class="fas fa-trash"></i></button>
                 </div>
               </td>
             </tr>

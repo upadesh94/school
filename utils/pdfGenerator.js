@@ -190,7 +190,7 @@ const utaraSection = (student, addPageBreak) => {
 
 /**
  * Generate a single DOCX buffer with one page per student.
- * @param {Array}  students — array of Student model docs or plain objects
+ * @param {Array}  students — array of Student mongoose docs or plain objects
  * @param {string} type     — 'bonafide' | 'utara'
  * @returns {Promise<Buffer>}
  */

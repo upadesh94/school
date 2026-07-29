@@ -6,23 +6,38 @@ const Teacher = require('../models/Teacher');
 const Student = require('../models/Student');
 const ActivityLog = require('../models/ActivityLog');
 const { protectAdmin } = require('../middleware/auth');
-const { uploadPhoto } = require('../middleware/upload');
+const { uploadPhoto, uploadExcel } = require('../middleware/upload');
 const { sendEmail, teacherWelcomeEmail, teacherUpdateEmail, teacherPasswordResetEmail } = require('../utils/mailer');
+const xlsx = require('xlsx');
 
 router.use(protectAdmin);
 
 // ─── DASHBOARD ──────────────────────────────────────────────────
 router.get('/dashboard', async (req, res) => {
   try {
-    const [totalTeachers, activeTeachers, totalStudents, recentActivities, classWiseCount] = await Promise.all([
+    // Get all students for in-memory aggregation since Firebase doesn't support it directly
+    const allStudents = await Student.find();
+    
+    // Group by class and section
+    const classCountMap = {};
+    allStudents.forEach(s => {
+      const cls = s.currentClass || 'Unknown';
+      const sec = s.currentSection || '';
+      const key = `${cls}_${sec}`;
+      if (!classCountMap[key]) {
+        classCountMap[key] = { _id: { class: cls, section: sec }, count: 0 };
+      }
+      classCountMap[key].count++;
+    });
+    
+    // Convert to array and sort by class
+    const classWiseCount = Object.values(classCountMap).sort((a, b) => a._id.class.localeCompare(b._id.class));
+    const totalStudents = allStudents.length;
+
+    const [totalTeachers, activeTeachers, recentActivities] = await Promise.all([
       Teacher.countDocuments(),
       Teacher.countDocuments({ isActive: true }),
-      Student.countDocuments(),
-      ActivityLog.find().sort({ createdAt: -1 }).limit(10),
-      Student.aggregate([
-        { $group: { _id: { class: '$currentClass', section: '$currentSection' }, count: { $sum: 1 } } },
-        { $sort: { '_id.class': 1 } }
-      ])
+      ActivityLog.find().sort({ createdAt: -1 }).limit(10)
     ]);
     res.render('admin/dashboard', {
       title: 'Admin Dashboard', admin: req.admin,
@@ -70,7 +85,7 @@ router.post('/teachers/add', (req, res, next) => {
   });
 }, async (req, res) => {
   try {
-    const { name, email, phone, qualification, subject, classAssigned, section, address, gender, dateOfBirth, joiningDate } = req.body;
+    const { name, email, phone, qualification, subject, classAssigned, section, address, gender, dateOfBirth, joiningDate, isActive, employeeId } = req.body;
 
     if (!name || !email) {
       return res.render('admin/teacher-form', {
@@ -87,18 +102,15 @@ router.post('/teachers/add', (req, res, next) => {
     }
 
     const rawPassword = `Teacher@${Math.floor(1000 + Math.random() * 9000)}`;
-    const teacher = new Teacher({
-      name: name.trim(), email: email.toLowerCase().trim(), phone, qualification,
-      subject, classAssigned, section, address, gender, dateOfBirth, joiningDate,
+    const teacher = await Teacher.create({
+      name: name.trim(), email: email.toLowerCase().trim(), phone, qualification, subject,
+      classAssigned, section, address, gender, dateOfBirth, joiningDate,
       password: rawPassword,
+      isActive: isActive === 'true',
+      isApproved: true,
       profilePhoto: req.file ? `/uploads/photos/${req.file.filename}` : '',
-      addedBy: req.admin._id
-    });
-    await teacher.save();
-
-    // Send welcome email (non-blocking)
-    sendEmail(teacherWelcomeEmail(teacher, rawPassword)).then(sent => {
-      if (!sent) console.log('⚠️ Welcome email failed for', teacher.email);
+      addedBy: req.admin._id,
+      employeeId
     });
 
     await ActivityLog.create({
@@ -107,13 +119,37 @@ router.post('/teachers/add', (req, res, next) => {
       details: `Added teacher ${teacher.name} (${teacher.employeeId}) — Email: ${teacher.email}`
     });
 
-    res.redirect('/admin/teachers?success=Teacher added successfully! Login credentials emailed.');
+    res.redirect(`/admin/teachers?success=Teacher added successfully! Password is ${rawPassword}`);
   } catch (err) {
     console.error('Add teacher error:', err);
     res.render('admin/teacher-form', {
       title: 'Add Teacher', admin: req.admin, teacher: null,
       error: err.code === 11000 ? 'Email already registered' : err.message
     });
+  }
+});
+
+// ─── APPROVE TEACHER POST ──────────────────────────────────────────
+router.post('/teachers/approve/:id', async (req, res) => {
+  try {
+    const teacher = await Teacher.findById(req.params.id);
+    if (!teacher) return res.redirect('/admin/teachers?error=Teacher not found');
+    
+    await Teacher.findByIdAndUpdate(req.params.id, {
+      isApproved: true,
+      isActive: true
+    });
+    
+    await ActivityLog.create({
+      action: 'Teacher Approved', performedBy: req.admin.name, performedByRole: 'admin',
+      performedById: req.admin._id, target: teacher.name,
+      details: `Approved teacher registration for ${teacher.name}`
+    });
+
+    res.redirect('/admin/teachers?success=Teacher approved successfully!');
+  } catch (err) {
+    console.error('Approve teacher error:', err);
+    res.redirect('/admin/teachers?error=' + encodeURIComponent(err.message));
   }
 });
 
@@ -230,34 +266,235 @@ router.post('/teachers/delete/:id', async (req, res) => {
 router.get('/students', async (req, res) => {
   try {
     const { classFilter, search } = req.query;
-    let query = {};
-    if (classFilter) query.currentClass = classFilter;
-    if (search) query.$or = [
-      { name: new RegExp(search, 'i') },
-      { enrollmentId: new RegExp(search, 'i') },
-      { rollNo: new RegExp(search, 'i') }
-    ];
-    const [students, classes] = await Promise.all([
-      Student.find(query).populate('addedBy', 'name').sort({ currentClass: 1, rollNo: 1 }),
-      Student.distinct('currentClass')
-    ]);
+    
+    // Fetch all students and filter in memory
+    let students = await Student.find();
+    
+    if (classFilter) {
+      students = students.filter(s => s.currentClass === classFilter);
+    }
+    
+    if (search) {
+      const q = search.toLowerCase();
+      students = students.filter(s => 
+        (s.name && s.name.toLowerCase().includes(q)) ||
+        (s.enrollmentId && s.enrollmentId.toLowerCase().includes(q)) ||
+        (s.rollNo && String(s.rollNo).toLowerCase().includes(q))
+      );
+    }
+    
+    // Sort students
+    students.sort((a, b) => {
+      if (a.currentClass === b.currentClass) {
+        return (Number(a.rollNo) || 0) - (Number(b.rollNo) || 0);
+      }
+      return String(a.currentClass || '').localeCompare(String(b.currentClass || ''));
+    });
+    
+    // Get unique classes for the filter dropdown
+    const allStudents = await Student.find();
+    const classes = [...new Set(allStudents.map(s => s.currentClass).filter(Boolean))];
+
     res.render('admin/students', {
       title: 'All Students', admin: req.admin, students, classes,
       classFilter: classFilter || '', search: search || ''
     });
   } catch (err) {
+    console.error('Students List error:', err);
     res.render('admin/students', { title: 'All Students', admin: req.admin, students: [], classes: [], classFilter: '', search: '', error: err.message });
+  }
+});
+
+// ─── ADD STUDENT FORM ───────────────────────────────────────────
+router.get('/students/add', (req, res) => {
+  res.render('admin/student-form', { title: 'Add Student', admin: req.admin, error: null });
+});
+
+// ─── ADD STUDENT POST ───────────────────────────────────────────
+router.post('/students/add', (req, res, next) => {
+  uploadPhoto.single('photo')(req, res, (err) => {
+    if (err) {
+      return res.render('admin/student-form', {
+        title: 'Add Student', admin: req.admin,
+        error: 'Photo upload error: ' + err.message
+      });
+    }
+    next();
+  });
+}, async (req, res) => {
+  try {
+    const { name, fatherName, motherName, gender, dateOfBirth, aadharNo, parentContact, currentClass, currentSection, rollNo, admissionDate, religion, category } = req.body;
+    
+    if (!name || !currentClass || !dateOfBirth) {
+      return res.render('admin/student-form', {
+        title: 'Add Student', admin: req.admin, error: 'Name, Class and DOB are required'
+      });
+    }
+
+    const student = await Student.create({
+      name: name.trim(), fatherName, motherName, gender, dateOfBirth, aadharNo, parentContact,
+      currentClass, currentSection, rollNo, admissionDate, religion, category,
+      photo: req.file ? `/uploads/photos/${req.file.filename}` : '',
+      addedBy: req.admin._id
+    });
+    
+    await ActivityLog.create({
+      action: 'Student Added', performedBy: req.admin.name, performedByRole: 'admin',
+      performedById: req.admin._id, target: student.name,
+      details: `Added student ${student.name} to class ${student.currentClass}`
+    });
+
+    res.redirect('/admin/students?success=Student added successfully!');
+  } catch (err) {
+    console.error('Add student error:', err);
+    res.render('admin/student-form', {
+      title: 'Add Student', admin: req.admin,
+      error: err.message
+    });
+  }
+});
+
+// ─── EDIT STUDENT FORM ──────────────────────────────────────────
+router.get('/students/edit/:id', async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+    if (!student) return res.redirect('/admin/students?error=Student not found');
+    res.render('admin/student-form', { title: 'Edit Student', admin: req.admin, student, error: null });
+  } catch (err) {
+    res.redirect('/admin/students?error=' + err.message);
+  }
+});
+
+// ─── EDIT STUDENT POST ──────────────────────────────────────────
+router.post('/students/edit/:id', (req, res, next) => {
+  uploadPhoto.single('photo')(req, res, (err) => {
+    if (err) {
+      return res.redirect(`/admin/students/edit/${req.params.id}?error=Photo upload error: ${err.message}`);
+    }
+    next();
+  });
+}, async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+    if (!student) return res.redirect('/admin/students?error=Student not found');
+
+    const { name, fatherName, motherName, gender, dateOfBirth, aadharNo, parentContact, currentClass, currentSection, rollNo, admissionDate, religion, category } = req.body;
+    
+    const updateData = {
+        name: name?.trim() || student.name,
+        fatherName: fatherName || student.fatherName,
+        motherName: motherName || student.motherName,
+        gender: gender || student.gender,
+        dateOfBirth: dateOfBirth || student.dateOfBirth,
+        aadharNo: aadharNo || student.aadharNo,
+        parentContact: parentContact || student.parentContact,
+        currentClass: currentClass || student.currentClass,
+        currentSection: currentSection || student.currentSection,
+        rollNo: rollNo || student.rollNo,
+        admissionDate: admissionDate || student.admissionDate,
+        religion: religion || student.religion,
+        category: category || student.category
+    };
+    
+    if (req.file) updateData.photo = `/uploads/photos/${req.file.filename}`;
+    
+    await Student.findByIdAndUpdate(req.params.id, updateData);
+    
+    await ActivityLog.create({
+      action: 'Student Updated', performedBy: req.admin.name, performedByRole: 'admin',
+      performedById: req.admin._id, target: updateData.name,
+      details: `Updated student details for ${updateData.name}`
+    });
+
+    res.redirect(`/admin/students/${req.params.id}?success=Student updated successfully!`);
+  } catch (err) {
+    console.error('Edit student error:', err);
+    res.redirect(`/admin/students/edit/${req.params.id}?error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+// ─── EXCEL UPLOAD POST ──────────────────────────────────────────
+router.post('/students/upload', (req, res, next) => {
+  uploadExcel.single('excelFile')(req, res, (err) => {
+    if (err) return res.redirect('/admin/students?error=Upload error: ' + err.message);
+    next();
+  });
+}, async (req, res) => {
+  try {
+    if (!req.file) return res.redirect('/admin/students?error=No file uploaded');
+    
+    const workbook = xlsx.readFile(req.file.path);
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const data = xlsx.utils.sheet_to_json(sheet);
+    
+    if (data.length === 0) return res.redirect('/admin/students?error=Excel file is empty');
+    
+    let added = 0;
+    for (const row of data) {
+      if (row.name && row.currentClass) {
+        await Student.create({
+          name: String(row.name).trim(),
+          currentClass: String(row.currentClass),
+          currentSection: row.currentSection ? String(row.currentSection) : '',
+          rollNo: row.rollNo || '',
+          gender: row.gender || '',
+          dateOfBirth: row.dateOfBirth ? new Date(row.dateOfBirth).toISOString() : null,
+          fatherName: row.fatherName || '',
+          motherName: row.motherName || '',
+          parentContact: row.parentContact || '',
+          aadharNo: row.aadharNo || '',
+          category: row.category || '',
+          religion: row.religion || '',
+          admissionDate: row.admissionDate ? new Date(row.admissionDate).toISOString() : null,
+          addedBy: req.admin._id
+        });
+        added++;
+      }
+    }
+    
+    await ActivityLog.create({
+      action: 'Bulk Student Upload', performedBy: req.admin.name, performedByRole: 'admin',
+      performedById: req.admin._id, target: `${added} Students`,
+      details: `Uploaded ${added} students via Excel`
+    });
+    
+    res.redirect(`/admin/students?success=${added} students successfully added via Excel!`);
+  } catch (err) {
+    console.error('Excel upload error:', err);
+    res.redirect('/admin/students?error=Failed to process Excel: ' + err.message);
   }
 });
 
 router.get('/students/:id', async (req, res) => {
   try {
-    const student = await Student.findById(req.params.id)
-      .populate('addedBy', 'name').populate('lastUpdatedBy', 'name');
+    const student = await Student.findById(req.params.id);
     if (!student) return res.redirect('/admin/students?error=Student not found');
     res.render('admin/student-detail', { title: student.name, admin: req.admin, student });
   } catch (err) {
     res.redirect('/admin/students?error=' + err.message);
+  }
+});
+
+// ─── PRINT BONAFIDE ─────────────────────────────────────────────
+router.get('/students/:id/bonafide', async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+    if (!student) return res.send('Student not found');
+    res.render('admin/print-bonafide', { student });
+  } catch (err) {
+    res.send('Error: ' + err.message);
+  }
+});
+
+// ─── PRINT TC ───────────────────────────────────────────────────
+router.get('/students/:id/tc', async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+    if (!student) return res.send('Student not found');
+    res.render('admin/print-tc', { student });
+  } catch (err) {
+    res.send('Error: ' + err.message);
   }
 });
 
@@ -273,7 +510,8 @@ router.get('/activities', async (req, res) => {
 
 // ─── PROFILE ────────────────────────────────────────────────────
 router.get('/profile', async (req, res) => {
-  const admin = await Admin.findById(req.admin._id).select('-password');
+  const admin = await Admin.findById(req.admin._id);
+  if (admin) delete admin.password;
   res.render('admin/profile', { title: 'My Profile', admin, error: null, success: null });
 });
 
@@ -299,11 +537,13 @@ router.post('/profile', (req, res, next) => {
 
     await admin.save({ validateBeforeSave: false });
 
-    const updatedAdmin = await Admin.findById(req.admin._id).select('-password');
+    const updatedAdmin = await Admin.findById(req.admin._id);
+    if (updatedAdmin) delete updatedAdmin.password;
     res.render('admin/profile', { title: 'My Profile', admin: updatedAdmin, error: null, success: 'Profile updated successfully!' });
   } catch (err) {
     console.error('Profile update error:', err);
-    const admin = await Admin.findById(req.admin._id).select('-password');
+    const admin = await Admin.findById(req.admin._id);
+    if (admin) delete admin.password;
     res.render('admin/profile', { title: 'My Profile', admin, error: 'Update failed: ' + err.message, success: null });
   }
 });

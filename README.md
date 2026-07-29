@@ -1,6 +1,6 @@
 # 🎓 Riya International School — ERP System
 
-A complete school management ERP built with **Node.js**, **Express**, **Firebase Firestore**, **ERP**, **JWT Auth**, and **Nodemailer**.
+A complete school management ERP built with **Node.js**, **Express**, **MongoDB**, **ERP**, **JWT Auth**, and **Nodemailer**.
 
 ---
 
@@ -12,7 +12,7 @@ school-erp/
 ├── .env                      # Environment variables (configure this!)
 ├── package.json
 ├── config/
-│   └── db.js                 # Firebase Firestore initialization
+│   └── db.js                 # MongoDB connection
 ├── models/
 │   ├── Admin.js              # Admin (Principal) model with bcrypt
 │   ├── Teacher.js            # Teacher model with bcrypt + auto Employee ID
@@ -52,33 +52,24 @@ npm install
 Edit `.env` file:
 ```env
 PORT=3000
-GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/to/serviceAccountKey.json
-# OR
-FIREBASE_SERVICE_ACCOUNT_KEY={"type":"service_account","project_id":"your-project-id"}
-
-# Firebase Web Config (required for Firebase Auth sign-in)
-FIREBASE_API_KEY=your_firebase_web_api_key
-FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
-FIREBASE_PROJECT_ID=your-project-id
-
+MONGO_URI=mongodb://localhost:27017/school_erp
 JWT_SECRET=your_very_secure_secret_here
 SESSION_SECRET=your_session_secret_here
 
-# Demo Principal (Firebase Auth)
-DEMO_PRINCIPAL_EMAIL=principle@gmail.com
-DEMO_PRINCIPAL_PASSWORD=123123
-DEMO_PRINCIPAL_NAME=Principal Demo
-DEMO_PRINCIPAL_USERNAME=principal
+# Admin Login
+ADMIN_USERNAME=principal
+ADMIN_PASSWORD=Admin@123
+ADMIN_EMAIL=principal@riyaschool.com
 
 # Gmail SMTP (use App Password, not real Gmail password)
 EMAIL_USER=your.email@gmail.com
 EMAIL_PASS=your_16_char_app_password
 ```
 
-### 3. Configure Firebase Admin credentials
-Download your Firebase service account JSON and either:
-- set `GOOGLE_APPLICATION_CREDENTIALS` to that file path, or
-- set `FIREBASE_SERVICE_ACCOUNT_KEY` with JSON content in one line.
+### 3. Start MongoDB
+```bash
+mongod
+```
 
 ### 4. Start the App
 ```bash
@@ -91,16 +82,13 @@ npm run dev      # Development (with nodemon)
 http://localhost:3000
 ```
 Admin auto-creates on first startup. Login: `principal / Admin@123`
-Principal demo account auto-creates in Firebase Auth on first startup.
-Login: `principle@gmail.com / 123123`
 
 ---
 
 ## 🔐 Authentication
 
-- **Firebase Auth** validates Principal credentials (email + password)
 - **JWT Tokens** stored in **HTTP-only cookies** + session
-- **bcryptjs** hashing remains for local teacher/admin profile data
+- **bcryptjs** hashing (salt rounds: 12)
 - Protected routes via middleware (`protectAdmin`, `protectTeacher`)
 - Auto redirect if already logged in
 

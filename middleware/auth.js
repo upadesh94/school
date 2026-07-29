@@ -24,24 +24,8 @@ const protectAdmin = async (req, res, next) => {
       res.clearCookie('adminToken', { httpOnly: true, sameSite: 'strict' });
       return res.redirect('/auth/login?msg=Session संपले किंवा अमान्य. पुन्हा लॉगिन करा.');
     }
-
-    // Allow Firebase-only principal sessions when profile store permissions are restricted.
-    if (decoded.firebaseAuth === true && decoded.email) {
-      const firebaseAdmin = {
-        _id: decoded.id,
-        name: decoded.name || 'Principal',
-        email: decoded.email,
-        role: 'admin',
-        isFirebaseAuth: true,
-      };
-      req.admin = firebaseAdmin;
-      res.locals.admin = firebaseAdmin;
-      res.locals.currentUser = firebaseAdmin;
-      res.locals.userRole = 'admin';
-      return next();
-    }
-
-    const admin = await Admin.findById(decoded.id).select('-password');
+    const admin = await Admin.findById(decoded.id);
+    if (admin) delete admin.password;
     if (!admin) {
       res.clearCookie('adminToken', { httpOnly: true, sameSite: 'strict' });
       return res.redirect('/auth/login?msg=खाते सापडले नाही.');
@@ -71,7 +55,8 @@ const protectTeacher = async (req, res, next) => {
       res.clearCookie('teacherToken', { httpOnly: true, sameSite: 'strict' });
       return res.redirect('/auth/login?msg=Session संपले किंवा अमान्य. पुन्हा लॉगिन करा.');
     }
-    const teacher = await Teacher.findById(decoded.id).select('-password');
+    const teacher = await Teacher.findById(decoded.id);
+    if (teacher) delete teacher.password;
     if (!teacher || !teacher.isActive) {
       res.clearCookie('teacherToken', { httpOnly: true, sameSite: 'strict' });
       return res.redirect('/auth/login?msg=खाते निष्क्रिय किंवा सापडले नाही.');

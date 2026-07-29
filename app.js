@@ -5,81 +5,41 @@ const fs = require('fs');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const methodOverride = require('method-override');
-const connectDB = require('./config/db');
+require('./config/db');
 const Admin = require('./models/Admin');
-const {
-  ensureFirebaseAuthUser,
-  getDemoPrincipalCredentials,
-} = require('./utils/firebaseAuthService');
 
 const app = express();
-const isServerlessRuntime = Boolean(process.env.VERCEL);
-const runtimeUploadRoot = isServerlessRuntime
-  ? path.join('/tmp', 'uploads')
-  : path.join(__dirname, 'public/uploads');
-
-// ── Connect DB ─────────────────────────────────────────────────
-connectDB();
 
 // ── Ensure upload directories exist ────────────────────────────
 const uploadDirs = [
-  runtimeUploadRoot,
-  path.join(runtimeUploadRoot, 'photos')
+  path.join(__dirname, 'public/uploads'),
+  path.join(__dirname, 'public/uploads/photos')
 ];
 uploadDirs.forEach(dir => {
-  try {
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-      console.log('📁 Created:', dir);
-    }
-  } catch (err) {
-    console.warn(`⚠️ Upload directory unavailable (${dir}): ${err.message}`);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    console.log('📁 Created:', dir);
   }
 });
 
 // ── Seed Admin ─────────────────────────────────────────────────
 const seedAdmin = async () => {
-  const demoPrincipal = getDemoPrincipalCredentials();
-
   try {
-    const firebaseSeed = await ensureFirebaseAuthUser(demoPrincipal);
-    if (firebaseSeed.created) {
-      console.log(`✅ Firebase Auth principal created → ${demoPrincipal.email} / ${demoPrincipal.password}`);
-    } else {
-      console.log(`ℹ️ Firebase Auth principal already exists → ${demoPrincipal.email}`);
-    }
-  } catch (err) {
-    console.error('⚠️ Firebase Auth seed error:', err.message);
-  }
-
-  try {
-    let adminProfile = await Admin.findOne({
-      $or: [
-        { username: demoPrincipal.username },
-        { email: demoPrincipal.email },
-      ],
-    });
-
-    if (!adminProfile) {
-      adminProfile = await Admin.create({
-        username: demoPrincipal.username,
-        email: demoPrincipal.email,
-        password: demoPrincipal.password,
-        name: demoPrincipal.displayName || 'Principal',
+    const exists = await Admin.findOne({ username: process.env.ADMIN_USERNAME || 'mukhyadhyapak' });
+    if (!exists) {
+      await Admin.create({
+        username: process.env.ADMIN_USERNAME || 'mukhyadhyapak',
+        email: process.env.ADMIN_EMAIL || 'admin@tuljabhavani.edu',
+        password: process.env.ADMIN_PASSWORD || 'Admin@123',
+        name: 'मुख्याध्यापक'
       });
-      console.log(`✅ Admin profile created → ${adminProfile.username} / ${demoPrincipal.email}`);
-    } else if (adminProfile.email !== demoPrincipal.email) {
-      adminProfile.email = demoPrincipal.email;
-      await adminProfile.save();
-      console.log(`ℹ️ Admin email synced to Firebase Auth → ${demoPrincipal.email}`);
+      console.log('✅ Admin created → mukhyadhyapak / Admin@123');
     }
   } catch (err) {
     console.error('⚠️ Admin seed error:', err.message);
   }
 };
-if (!isServerlessRuntime && process.env.ENABLE_STARTUP_SEED !== 'false') {
-  setTimeout(seedAdmin, 1500);
-}
+setTimeout(seedAdmin, 1500);
 
 // ── View Engine ────────────────────────────────────────────────
 app.set('view engine', 'ejs');
@@ -102,7 +62,7 @@ app.use((req, res, next) => {
 
 // ── Static Files ───────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(runtimeUploadRoot));
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 // ── Session (minimal — NOT used for auth tokens) ───────────────
 app.use(session({
@@ -156,15 +116,11 @@ app.use((err, req, res, next) => {
   `);
 });
 
+// ── Start Server ───────────────────────────────────────────────
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`\n🚀 तुलजाभवानी ERP → http://localhost:${PORT}`);
+  console.log(`   Login: mukhyadhyapak / Admin@123\n`);
+});
+
 module.exports = app;
-
-// ── Start Server (local only) ──────────────────────────────────
-if (require.main === module) {
-  const PORT = process.env.PORT || 3000;
-  const demoPrincipal = getDemoPrincipalCredentials();
-
-  app.listen(PORT, () => {
-    console.log(`\n🚀 तुलजाभवानी ERP → http://localhost:${PORT}`);
-    console.log(`   Principal demo login: ${demoPrincipal.email} / ${demoPrincipal.password}\n`);
-  });
-}

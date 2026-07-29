@@ -11,7 +11,10 @@
         <div class="breadcrumb">विद्यार्थी तपशील / Student Detail</div>
       </div>
     </div>
-    <div class="topbar-right">
+    <div class="topbar-right" style="display:flex; gap:10px;">
+      <a href="/admin/students/edit/<%= student._id %>" class="topbar-btn btn-gold"><i class="fas fa-edit"></i> Edit Information</a>
+      <a href="/admin/students/<%= student._id %>/bonafide" target="_blank" class="topbar-btn btn-gold"><i class="fas fa-file-alt"></i> Print Bonafide</a>
+      <a href="/admin/students/<%= student._id %>/tc" target="_blank" class="topbar-btn btn-gold"><i class="fas fa-file-export"></i> Print TC</a>
       <a href="/admin/students" class="topbar-btn btn-outline"><i class="fas fa-arrow-left"></i> परत / Back</a>
     </div>
   </div>

@@ -3,17 +3,8 @@ const router = express.Router();
 const Admin = require('../models/Admin');
 const Teacher = require('../models/Teacher');
 const { generateToken, verifyToken } = require('../utils/jwtHelper');
-const {
-  signInWithFirebaseAuth,
-  getDemoPrincipalCredentials,
-} = require('../utils/firebaseAuthService');
-
-const isFirestorePermissionError = (error) => {
-  if (!error) return false;
-  const message = String(error.message || '').toLowerCase();
-  return error.code === 'permission-denied' || message.includes('insufficient permissions');
-};
-
+const { auth } = require('../config/db');
+const { signInWithEmailAndPassword } = require('firebase/auth');
 const COOKIE_OPTS = {
   httpOnly: true,
   sameSite: 'strict',
@@ -42,6 +33,58 @@ router.get('/login', (req, res) => {
   });
 });
 
+// GET /auth/register-teacher
+router.get('/register-teacher', (req, res) => {
+  res.render('auth/register-teacher', {
+    title: 'शिक्षक नोंदणी',
+    error: null,
+    message: null
+  });
+});
+
+const { createUserWithEmailAndPassword } = require('firebase/auth');
+
+// POST /auth/register-teacher
+router.post('/register-teacher', async (req, res) => {
+  try {
+    const { name, email, phone, password, subject } = req.body;
+    
+    // Check if email already exists in Firestore
+    const existing = await Teacher.findOne({ email: email.toLowerCase().trim() });
+    if (existing) {
+      return res.render('auth/register-teacher', { title: 'शिक्षक नोंदणी', error: 'Email is already registered.', message: null });
+    }
+    
+    // Create Firebase Auth user
+    await createUserWithEmailAndPassword(auth, email.toLowerCase().trim(), password);
+    
+    // Create Firestore document with isApproved: false
+    await Teacher.create({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      phone: phone.trim(),
+      password: password, // will be hashed by Teacher.preSave
+      subject: subject ? subject.trim() : '',
+      isActive: false, // Must be approved
+      isApproved: false,
+      role: 'teacher'
+    });
+    
+    res.render('auth/register-teacher', {
+      title: 'शिक्षक नोंदणी',
+      error: null,
+      message: 'नोंदणी यशस्वी झाली! मुख्याध्यापकांच्या मंजुरीची प्रतीक्षा करा. (Registration successful! Please wait for Principal approval.)'
+    });
+  } catch (err) {
+    console.error('Teacher registration error:', err);
+    res.render('auth/register-teacher', {
+      title: 'शिक्षक नोंदणी',
+      error: err.message,
+      message: null
+    });
+  }
+});
+
 // POST /auth/login
 router.post('/login', async (req, res) => {
   const { username, email, password, role } = req.body;
@@ -52,112 +95,31 @@ router.post('/login', async (req, res) => {
 
   try {
     if (role === 'admin') {
-      const demoPrincipal = getDemoPrincipalCredentials();
-      const normalizedLoginId = String(loginId || '').trim().toLowerCase();
-      let admin = null;
-      let profileStoreUnavailable = false;
-
       try {
-        admin = await Admin.findOne({
-          $or: [{ username: loginId }, { email: normalizedLoginId }],
-        });
-      } catch (lookupErr) {
-        if (isFirestorePermissionError(lookupErr)) {
-          profileStoreUnavailable = true;
-          admin = null;
-        } else {
-          throw lookupErr;
+        const userCredential = await signInWithEmailAndPassword(auth, loginId, password);
+        const fbUser = userCredential.user;
+        
+        let admin = await Admin.findOne({ email: fbUser.email });
+        if (!admin) {
+          admin = await Admin.findOne({ username: loginId });
         }
-      }
-
-      const adminEmail = normalizedLoginId.includes('@')
-        ? normalizedLoginId
-        : String(
-          admin?.email ||
-          (normalizedLoginId === demoPrincipal.username ? demoPrincipal.email : '')
-        ).trim().toLowerCase();
-
-      if (!adminEmail) {
-        return res.render('auth/login', {
-          title: 'लॉगिन', role: 'admin', activeSession: null,
-          error: '❌ चुकीचे Username किंवा Password', message: null
-        });
-      }
-
-      const firebaseLogin = await signInWithFirebaseAuth(adminEmail, password);
-      if (!firebaseLogin.ok && firebaseLogin.code !== 'FIREBASE_AUTH_NOT_CONFIGURED') {
-        return res.render('auth/login', {
-          title: 'लॉगिन', role: 'admin', activeSession: null,
-          error: '❌ चुकीचे Username किंवा Password', message: null
-        });
-      }
-
-      if (!admin && !firebaseLogin.ok) {
-        return res.render('auth/login', {
-          title: 'लॉगिन', role: 'admin', activeSession: null,
-          error: '❌ चुकीचे Username किंवा Password', message: null
-        });
-      }
-
-      if (firebaseLogin.code === 'FIREBASE_AUTH_NOT_CONFIGURED') {
-        if (!admin || !(await admin.comparePassword(password))) {
+        
+        if (!admin) {
           return res.render('auth/login', {
             title: 'लॉगिन', role: 'admin', activeSession: null,
-            error: '❌ चुकीचे Username किंवा Password', message: null
-          });
-        }
-      }
-
-      if (!admin) {
-        if (adminEmail !== demoPrincipal.email) {
-          return res.render('auth/login', {
-            title: 'लॉगिन', role: 'admin', activeSession: null,
-            error: '❌ Admin account not allowed for this email', message: null
+            error: '❌ खाते सापडले नाही. (Admin Doc missing)', message: null
           });
         }
 
-        if (!profileStoreUnavailable) {
-          try {
-            admin = await Admin.create({
-              username: demoPrincipal.username,
-              email: demoPrincipal.email,
-              password: demoPrincipal.password,
-              name: demoPrincipal.displayName || 'Principal',
-            });
-          } catch (createErr) {
-            if (isFirestorePermissionError(createErr)) {
-              profileStoreUnavailable = true;
-              admin = null;
-            } else {
-              throw createErr;
-            }
-          }
-        }
-      } else if (admin.email !== adminEmail) {
-        admin.email = adminEmail;
+        const token = generateToken({ id: admin._id, role: 'admin', name: admin.name }, req);
+        res.cookie('adminToken', token, COOKIE_OPTS);
+        return res.redirect('/admin/dashboard');
+      } catch (err) {
+        return res.render('auth/login', {
+          title: 'लॉगिन', role: 'admin', activeSession: null,
+          error: '❌ चुकीचा Email/Username किंवा Password', message: null
+        });
       }
-
-      // Bind token to this browser session (IP + User-Agent fingerprint)
-      const tokenPayload = admin
-        ? { id: admin._id, role: 'admin', name: admin.name, email: admin.email }
-        : {
-          id: firebaseLogin.localId || adminEmail,
-          role: 'admin',
-          name: demoPrincipal.displayName || 'Principal',
-          email: adminEmail,
-          firebaseAuth: true,
-        };
-
-      const token = generateToken(tokenPayload, req);
-
-      if (admin) {
-        admin.lastLogin = new Date();
-        await admin.save({ validateBeforeSave: false });
-      }
-
-      res.cookie('adminToken', token, COOKIE_OPTS);
-      return res.redirect('/admin/dashboard');
-
     } else if (role === 'teacher') {
       const teacher = await Teacher.findOne({ email: loginId });
       if (!teacher || !(await teacher.comparePassword(password))) {
@@ -166,10 +128,10 @@ router.post('/login', async (req, res) => {
           error: '❌ चुकीचा Email किंवा Password', message: null
         });
       }
-      if (!teacher.isActive) {
+      if (!teacher.isActive || teacher.isApproved === false) {
         return res.render('auth/login', {
           title: 'लॉगिन', role: 'teacher', activeSession: null,
-          error: '❌ आपले खाते निष्क्रिय आहे. Admin शी संपर्क करा.', message: null
+          error: '❌ आपले खाते अद्याप मंजूर झालेले नाही. मुख्याध्यापकांशी संपर्क करा. (Pending Approval)', message: null
         });
       }
       // Bind token to this browser session (IP + User-Agent fingerprint)

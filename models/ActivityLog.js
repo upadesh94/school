@@ -1,24 +1,9 @@
-const { FirestoreModel } = require('../config/db');
+const FirebaseModel = require('../utils/firebaseModel');
 
-class ActivityLog extends FirestoreModel {
-  static collectionName() {
-    return 'activity_logs';
-  }
-
-  static defaults() {
-    return {
-      action: '',
-      performedBy: '',
-      performedByRole: '',
-      performedById: null,
-      target: '',
-      targetId: null,
-      details: '',
-      ipAddress: '',
-      createdAt: null,
-      updatedAt: null,
-    };
+class ActivityLog extends FirebaseModel {
+  constructor() {
+    super('activity_logs');
   }
 }
 
-module.exports = ActivityLog;
+module.exports = new ActivityLog();

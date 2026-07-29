@@ -1,0 +1,136 @@
+<%- include('../partials/admin-layout-head') %>
+<% activePage = 'students'; %>
+<div class="app-shell">
+<%- include('../partials/admin-sidebar') %>
+<main class="main-content">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu"><i class="fas fa-bars"></i></button>
+      <div>
+        <div class="page-title">
+          <%= typeof student !== 'undefined' && student ? 'विद्यार्थी माहिती संपादन' : 'विद्यार्थी जोडा' %>
+          <span style="font-family:'DM Sans',sans-serif;font-size:14px;color:#94a3b8;font-weight:400;"><%= typeof student !== 'undefined' && student ? 'Edit Student' : 'Add Student' %></span>
+        </div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <a href="/admin/students" class="topbar-btn btn-outline"><i class="fas fa-arrow-left"></i> परत / Back</a>
+    </div>
+  </div>
+  <div class="page-content">
+    <% if(error) { %><div class="alert-box alert-error"><i class="fas fa-exclamation-circle"></i> <%= error %></div><% } %>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <i class="fas <%= typeof student !== 'undefined' && student ? 'fa-user-edit' : 'fa-user-plus' %>"></i>
+          <%= typeof student !== 'undefined' && student ? 'विद्यार्थी माहिती संपादन / Edit Student Details' : 'नवीन विद्यार्थी नोंदणी / New Student Registration' %>
+        </div>
+      </div>
+      <div class="card-body">
+        <form method="POST" action="/admin/students/<%= typeof student !== 'undefined' && student ? 'edit/'+student._id : 'add' %>" enctype="multipart/form-data">
+          
+          <!-- Section: Basic Info -->
+          <div style="background:#f8faff;border-radius:10px;padding:16px;margin-bottom:20px;border-left:4px solid #1d3461;">
+            <div style="font-size:13px;font-weight:700;color:#0f1f3d;margin-bottom:14px;font-family:'Noto Sans Devanagari',sans-serif;">
+              <i class="fas fa-id-card" style="margin-right:8px;color:#c9a84c;"></i>वैयक्तिक माहिती / Personal Details
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="label">पूर्ण नाव / Full Name <span style="color:red">*</span></label>
+                <input type="text" name="name" class="input" required placeholder="विद्यार्थ्याचे पूर्ण नाव / Student's full name" value="<%= typeof student !== 'undefined' && student ? student.name : '' %>"/>
+              </div>
+              <div class="form-group">
+                <label class="label">वडिलांचे नाव / Father's Name <span style="color:red">*</span></label>
+                <input type="text" name="fatherName" class="input" required placeholder="वडिलांचे नाव / Father's name" value="<%= typeof student !== 'undefined' && student ? student.fatherName : '' %>"/>
+              </div>
+              <div class="form-group">
+                <label class="label">आईचे नाव / Mother's Name <span style="color:red">*</span></label>
+                <input type="text" name="motherName" class="input" required placeholder="आईचे नाव / Mother's name" value="<%= typeof student !== 'undefined' && student ? student.motherName : '' %>"/>
+              </div>
+              <div class="form-group">
+                <label class="label">लिंग / Gender</label>
+                <select name="gender" class="select">
+                  <option value="">-- निवडा / Select --</option>
+                  <option value="Male" <%= typeof student !== 'undefined' && student && student.gender === 'Male' ? 'selected' : '' %>>मुलगा / Male</option>
+                  <option value="Female" <%= typeof student !== 'undefined' && student && student.gender === 'Female' ? 'selected' : '' %>>मुलगी / Female</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="label">जन्म दिनांक / Date of Birth <span style="color:red">*</span></label>
+                <input type="date" name="dateOfBirth" class="input" required value="<%= typeof student !== 'undefined' && student && student.dateOfBirth ? new Date(student.dateOfBirth).toISOString().split('T')[0] : '' %>"/>
+              </div>
+              <div class="form-group">
+                <label class="label">आधार नंबर / Aadhar No</label>
+                <input type="text" name="aadharNo" class="input" placeholder="XXXX XXXX XXXX" value="<%= typeof student !== 'undefined' && student ? student.aadharNo : '' %>"/>
+              </div>
+              <div class="form-group">
+                <label class="label">पालक संपर्क / Parent Contact</label>
+                <input type="text" name="parentContact" class="input" placeholder="Phone Number" value="<%= typeof student !== 'undefined' && student ? student.parentContact : '' %>"/>
+              </div>
+              <div class="form-group">
+                <label class="label">फोटो / Photo</label>
+                <input type="file" name="photo" class="input" accept="image/*" style="padding:8px;"/>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section: Academic Details -->
+          <div style="background:#fffdf5;border-radius:10px;padding:16px;margin-bottom:20px;border-left:4px solid #c9a84c;">
+            <div style="font-size:13px;font-weight:700;color:#0f1f3d;margin-bottom:14px;font-family:'Noto Sans Devanagari',sans-serif;">
+              <i class="fas fa-graduation-cap" style="margin-right:8px;color:#c9a84c;"></i>शैक्षणिक माहिती / Academic Details
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="label">वर्ग / Class <span style="color:red">*</span></label>
+                <select name="currentClass" class="select" required>
+                  <option value="">-- निवडा / Select --</option>
+                  <% ['१ली','२री','३री','४थी','५वी','६वी','७वी','८वी','९वी','१०वी'].forEach((cls, i) => { %>
+                    <option value="<%= cls %>" <%= typeof student !== 'undefined' && student && student.currentClass === cls ? 'selected' : '' %>><%= cls %> (<%= i+1 %>th)</option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="label">तुकडी / Section</label>
+                <select name="currentSection" class="select">
+                  <option value="">-- तुकडी नाही / No Section --</option>
+                  <% ['A','B','C','D'].forEach(sec => { %>
+                    <option value="<%= sec %>" <%= typeof student !== 'undefined' && student && student.currentSection === sec ? 'selected' : '' %>><%= sec %> तुकडी</option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="label">क्र. / Roll No</label>
+                <input type="number" name="rollNo" class="input" placeholder="Roll Number" value="<%= typeof student !== 'undefined' && student ? student.rollNo : '' %>"/>
+              </div>
+              <div class="form-group">
+                <label class="label">प्रवेश दिनांक / Admission Date</label>
+                <input type="date" name="admissionDate" class="input" value="<%= typeof student !== 'undefined' && student && student.admissionDate ? new Date(student.admissionDate).toISOString().split('T')[0] : '' %>"/>
+              </div>
+              <div class="form-group">
+                <label class="label">धर्म / Religion</label>
+                <input type="text" name="religion" class="input" placeholder="Hindu, Muslim, etc." value="<%= typeof student !== 'undefined' && student ? student.religion : '' %>"/>
+              </div>
+              <div class="form-group">
+                <label class="label">जात / Category / Caste</label>
+                <input type="text" name="category" class="input" placeholder="OBC, SC, ST, Open..." value="<%= typeof student !== 'undefined' && student ? student.category : '' %>"/>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <button type="submit" class="topbar-btn btn-gold" style="padding:12px 28px;font-size:15px;">
+              <i class="fas fa-save"></i> <%= typeof student !== 'undefined' && student ? 'माहिती अपडेट करा / Update' : 'विद्यार्थी जोडा / Add Student' %>
+            </button>
+            <a href="/admin/students" class="topbar-btn btn-outline" style="padding:12px 20px;">रद्द करा / Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+<script>
+function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebarOverlay').classList.toggle('show'); }
+function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('show'); }
+</script>
+</body></html>
