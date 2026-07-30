@@ -96,10 +96,7 @@ router.post('/login', async (req, res) => {
   try {
     if (role === 'admin') {
       try {
-        const userCredential = await signInWithEmailAndPassword(auth, loginId, password);
-        const fbUser = userCredential.user;
-        
-        let admin = await Admin.findOne({ email: fbUser.email });
+        let admin = await Admin.findOne({ email: loginId });
         if (!admin) {
           admin = await Admin.findOne({ username: loginId });
         }
@@ -107,9 +104,12 @@ router.post('/login', async (req, res) => {
         if (!admin) {
           return res.render('auth/login', {
             title: 'लॉगिन', role: 'admin', activeSession: null,
-            error: '❌ खाते सापडले नाही. (Admin Doc missing)', message: null
+            error: '❌ खाते सापडले नाही. (Admin not found)', message: null
           });
         }
+
+        const userCredential = await signInWithEmailAndPassword(auth, admin.email, password);
+        const fbUser = userCredential.user;
 
         const token = generateToken({ id: admin._id, role: 'admin', name: admin.name }, req);
         res.cookie('adminToken', token, COOKIE_OPTS);

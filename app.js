@@ -29,15 +29,32 @@ uploadDirs.forEach(dir => {
 // ── Seed Admin ─────────────────────────────────────────────────
 const seedAdmin = async () => {
   try {
-    const exists = await Admin.findOne({ username: process.env.ADMIN_USERNAME || 'mukhyadhyapak' });
+    const username = process.env.ADMIN_USERNAME || 'mukhyadhyapak';
+    const email = process.env.ADMIN_EMAIL || 'admin@tuljabhavani.edu';
+    const password = process.env.ADMIN_PASSWORD || 'Admin@123';
+
+    // 1. Check and create in MongoDB
+    const exists = await Admin.findOne({ username });
     if (!exists) {
       await Admin.create({
-        username: process.env.ADMIN_USERNAME || 'mukhyadhyapak',
-        email: process.env.ADMIN_EMAIL || 'admin@tuljabhavani.edu',
-        password: process.env.ADMIN_PASSWORD || 'Admin@123',
+        username,
+        email,
+        password,
         name: 'मुख्याध्यापक'
       });
-      console.log('✅ Admin created → mukhyadhyapak / Admin@123');
+      console.log('✅ Admin created in MongoDB → mukhyadhyapak / Admin@123');
+    }
+
+    // 2. Check and create in Firebase Auth
+    const { auth } = require('./config/db');
+    const { createUserWithEmailAndPassword } = require('firebase/auth');
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      console.log('✅ Admin created in Firebase Auth');
+    } catch (e) {
+      if (e.code !== 'auth/email-already-in-use') {
+        console.error('⚠️ Firebase Admin seed error:', e.message);
+      }
     }
   } catch (err) {
     console.error('⚠️ Admin seed error:', err.message);
