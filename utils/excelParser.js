@@ -217,9 +217,9 @@ const isLabelRow = (nameCell) => {
   return ['★','◆','◇','○','LEGEND','legend'].some(p => s.startsWith(p));
 };
 
-const parseExcelToStudents = (filePath) => {
+const parseExcelToStudents = (fileBuffer) => {
   try {
-    const workbook = XLSX.readFile(filePath, { cellDates: false, raw: false });
+    const workbook = XLSX.read(fileBuffer, { type: 'buffer', cellDates: false, raw: false });
     const sheet    = workbook.Sheets[workbook.SheetNames[0]];
     const allRows  = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', blankrows: false });
 

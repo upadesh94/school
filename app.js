@@ -16,9 +16,13 @@ const uploadDirs = [
   path.join(__dirname, 'public/uploads/photos')
 ];
 uploadDirs.forEach(dir => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-    console.log('📁 Created:', dir);
+  try {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+      console.log('📁 Created:', dir);
+    }
+  } catch (err) {
+    console.log(`⚠️ Skipped creating ${dir} (read-only file system on Vercel)`);
   }
 });
 
@@ -118,9 +122,11 @@ app.use((err, req, res, next) => {
 
 // ── Start Server ───────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`\n🚀 तुलजाभवानी ERP → http://localhost:${PORT}`);
-  console.log(`   Login: mukhyadhyapak / Admin@123\n`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`\n🚀 तुलजाभवानी ERP → http://localhost:${PORT}`);
+    console.log(`   Login: mukhyadhyapak / Admin@123\n`);
+  });
+}
 
 module.exports = app;

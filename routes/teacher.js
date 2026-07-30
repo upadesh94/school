@@ -11,6 +11,7 @@ const { uploadPhoto, uploadExcel } = require('../middleware/upload');
 const { generateBonafideDocx, generateUtaraDocx } = require('../utils/docGenerator');
 const { generateBulkPDF } = require('../utils/pdfGenerator');
 const { parseExcelToStudents } = require('../utils/excelParser');
+const { uploadFileToFirebase } = require('../utils/firebaseStorage');
 
 router.use(protectTeacher);
 
@@ -103,10 +104,15 @@ router.post('/students/add', (req, res, next) => {
     if (!d.name || !d.currentClass) {
       return res.render('teacher/student-form', { title: 'नवीन विद्यार्थी', teacher: req.teacher, student: null, error: 'विद्यार्थ्याचे नाव आणि वर्ग आवश्यक आहे' });
     }
+    let photoUrl = '';
+    if (req.file) {
+      photoUrl = await uploadFileToFirebase(req.file.buffer, req.file.originalname, 'photos');
+    }
+
     const student = new Student({
       ...d,
       name: d.name.trim(),
-      photo: req.file ? `/uploads/photos/${req.file.filename}` : '',
+      photo: photoUrl,
       addedBy: req.teacher._id,
       lastUpdatedBy: req.teacher._id
     });
@@ -157,7 +163,7 @@ router.post('/students/:id/edit', (req, res, next) => {
       sanitized[key] = Array.isArray(d[key]) ? d[key][d[key].length - 1] : d[key];
     }
     Object.assign(student, { ...sanitized, name: sanitized.name?.trim() || student.name, lastUpdatedBy: req.teacher._id });
-    if (req.file) student.photo = `/uploads/photos/${req.file.filename}`;
+    if (req.file) student.photo = await uploadFileToFirebase(req.file.buffer, req.file.originalname, 'photos');
     await student.save();
     await ActivityLog.create({
       action: 'Student Updated', performedBy: req.teacher.name, performedByRole: 'teacher',
@@ -361,8 +367,7 @@ router.post('/upload-excel', (req, res, next) => {
 
   try {
     // Parse using the bulletproof parser (same column map as Namoona template)
-    const parsed = parseExcelToStudents(req.file.path);
-    try { fs.unlinkSync(req.file.path); } catch(e) {}
+    const parsed = parseExcelToStudents(req.file.buffer);
 
     if (!parsed.success) return renderErr(parsed.error);
     if (!parsed.students.length) return renderErr('Excel मध्ये कोणताही वैध विद्यार्थी सापडला नाही. नमुना डाउनलोड करून तोच वापरा.');
@@ -455,7 +460,6 @@ router.post('/upload-excel', (req, res, next) => {
     });
 
   } catch (err) {
-    try { fs.unlinkSync(req.file.path); } catch(e) {}
     res.render('teacher/upload-excel', {
       title: 'Excel आयात', teacher: req.teacher,
       error: 'फाइल प्रक्रिया त्रुटी: ' + err.message,
@@ -549,7 +553,7 @@ router.post('/profile', (req, res, next) => {
     teacher.name = name?.trim() || teacher.name;
     teacher.phone = phone;
     teacher.address = address;
-    if (req.file) teacher.profilePhoto = `/uploads/photos/${req.file.filename}`;
+    if (req.file) teacher.profilePhoto = await uploadFileToFirebase(req.file.buffer, req.file.originalname, 'photos');
     await teacher.save({ validateBeforeSave: false });
     const updated = await Teacher.findById(req.teacher._id).select('-password');
     res.render('teacher/profile', { title: 'माझी प्रोफाइल', teacher: updated, error: null, success: '✅ प्रोफाइल अपडेट झाली!' });

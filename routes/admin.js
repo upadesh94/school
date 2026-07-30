@@ -8,6 +8,7 @@ const ActivityLog = require('../models/ActivityLog');
 const { protectAdmin } = require('../middleware/auth');
 const { uploadPhoto, uploadExcel } = require('../middleware/upload');
 const { sendEmail, teacherWelcomeEmail, teacherUpdateEmail, teacherPasswordResetEmail } = require('../utils/mailer');
+const { uploadFileToFirebase } = require('../utils/firebaseStorage');
 const xlsx = require('xlsx');
 
 router.use(protectAdmin);
@@ -101,6 +102,11 @@ router.post('/teachers/add', (req, res, next) => {
       });
     }
 
+    let profilePhotoUrl = '';
+    if (req.file) {
+      profilePhotoUrl = await uploadFileToFirebase(req.file.buffer, req.file.originalname, 'photos');
+    }
+
     const rawPassword = `Teacher@${Math.floor(1000 + Math.random() * 9000)}`;
     const teacher = await Teacher.create({
       name: name.trim(), email: email.toLowerCase().trim(), phone, qualification, subject,
@@ -108,7 +114,7 @@ router.post('/teachers/add', (req, res, next) => {
       password: rawPassword,
       isActive: isActive === 'true',
       isApproved: true,
-      profilePhoto: req.file ? `/uploads/photos/${req.file.filename}` : '',
+      profilePhoto: profilePhotoUrl,
       addedBy: req.admin._id,
       employeeId
     });
@@ -198,7 +204,7 @@ router.post('/teachers/edit/:id', (req, res, next) => {
     if (dateOfBirth) teacher.dateOfBirth = dateOfBirth;
     if (joiningDate) teacher.joiningDate = joiningDate;
     teacher.isActive = isActive === 'true';
-    if (req.file) teacher.profilePhoto = `/uploads/photos/${req.file.filename}`;
+    if (req.file) teacher.profilePhoto = await uploadFileToFirebase(req.file.buffer, req.file.originalname, 'photos');
 
     await teacher.save({ validateBeforeSave: false });
 
@@ -331,10 +337,15 @@ router.post('/students/add', (req, res, next) => {
       });
     }
 
+    let photoUrl = '';
+    if (req.file) {
+      photoUrl = await uploadFileToFirebase(req.file.buffer, req.file.originalname, 'photos');
+    }
+
     const student = await Student.create({
       name: name.trim(), fatherName, motherName, gender, dateOfBirth, aadharNo, parentContact,
       currentClass, currentSection, rollNo, admissionDate, religion, category,
-      photo: req.file ? `/uploads/photos/${req.file.filename}` : '',
+      photo: photoUrl,
       addedBy: req.admin._id
     });
     
@@ -396,7 +407,7 @@ router.post('/students/edit/:id', (req, res, next) => {
         category: category || student.category
     };
     
-    if (req.file) updateData.photo = `/uploads/photos/${req.file.filename}`;
+    if (req.file) updateData.photo = await uploadFileToFirebase(req.file.buffer, req.file.originalname, 'photos');
     
     await Student.findByIdAndUpdate(req.params.id, updateData);
     
@@ -423,7 +434,7 @@ router.post('/students/upload', (req, res, next) => {
   try {
     if (!req.file) return res.redirect('/admin/students?error=No file uploaded');
     
-    const workbook = xlsx.readFile(req.file.path);
+    const workbook = xlsx.read(req.file.buffer);
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
     const data = xlsx.utils.sheet_to_json(sheet);
@@ -533,7 +544,7 @@ router.post('/profile', (req, res, next) => {
     admin.name = name?.trim() || admin.name;
     admin.email = email?.toLowerCase().trim() || admin.email;
     admin.phone = phone;
-    if (req.file) admin.profilePhoto = `/uploads/photos/${req.file.filename}`;
+    if (req.file) admin.profilePhoto = await uploadFileToFirebase(req.file.buffer, req.file.originalname, 'photos');
 
     await admin.save({ validateBeforeSave: false });
 
