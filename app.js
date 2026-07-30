@@ -30,12 +30,12 @@ uploadDirs.forEach(dir => {
 const seedAdmin = async () => {
   try {
     const username = process.env.ADMIN_USERNAME || 'mukhyadhyapak';
-    const email = process.env.ADMIN_EMAIL || 'admin@tuljabhavani.edu';
+    let email = process.env.ADMIN_EMAIL || 'admin@tuljabhavani.edu';
     const password = process.env.ADMIN_PASSWORD || 'Admin@123';
 
     // 1. Check and create in MongoDB
-    const exists = await Admin.findOne({ username });
-    if (!exists) {
+    const existingAdmin = await Admin.findOne({ username });
+    if (!existingAdmin) {
       await Admin.create({
         username,
         email,
@@ -43,6 +43,8 @@ const seedAdmin = async () => {
         name: 'मुख्याध्यापक'
       });
       console.log('✅ Admin created in MongoDB → mukhyadhyapak / Admin@123');
+    } else {
+      email = existingAdmin.email; // Use whatever email is actually in the DB
     }
 
     // 2. Check and create in Firebase Auth
