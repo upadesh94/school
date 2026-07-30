@@ -8,9 +8,10 @@ const crypto = require('crypto');
  */
 const makeFingerprint = (req) => {
   const ua = req.headers?.['user-agent'] || '';
+  const secret = process.env.JWT_SECRET || 'tuljabhavani_jwt_secret_key_2024';
   return crypto
     .createHash('sha256')
-    .update(`${ua}::${process.env.JWT_SECRET}`)
+    .update(`${ua}::${secret}`)
     .digest('hex')
     .slice(0, 32);
 };
@@ -22,9 +23,10 @@ const makeFingerprint = (req) => {
  */
 const generateToken = (payload, req) => {
   const fp = req ? makeFingerprint(req) : '';
+  const secret = process.env.JWT_SECRET || 'tuljabhavani_jwt_secret_key_2024';
   return jwt.sign(
     { ...payload, fp },
-    process.env.JWT_SECRET,
+    secret,
     { expiresIn: '24h', issuer: 'tuljabhavani-erp', audience: 'erp-client' }
   );
 };
@@ -37,7 +39,8 @@ const generateToken = (payload, req) => {
  */
 const verifyToken = (token, req) => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
+    const secret = process.env.JWT_SECRET || 'tuljabhavani_jwt_secret_key_2024';
+    const decoded = jwt.verify(token, secret, {
       issuer: 'tuljabhavani-erp',
       audience: 'erp-client'
     });

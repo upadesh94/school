@@ -115,6 +115,7 @@ router.post('/login', async (req, res) => {
         res.cookie('adminToken', token, COOKIE_OPTS);
         return res.redirect('/admin/dashboard');
       } catch (err) {
+        console.error('Firebase admin login error:', err.message);
         return res.render('auth/login', {
           title: 'लॉगिन', role: 'admin', activeSession: null,
           error: '❌ चुकीचा Email/Username किंवा Password', message: null
